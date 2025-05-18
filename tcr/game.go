@@ -6,7 +6,6 @@ package main
 import (
 	"encoding/json"
 	"math/rand"
-	"os"
 	"sync"
 	"time"
 )
@@ -20,21 +19,17 @@ const (
 )
 
 // GameSession holds state for a single 1v1 match
-// Comments: core state, channels, and synchronization primitives
-// ========= STATE START =========
-// mutex protects access to shared game state
 var mutex sync.Mutex // protects session state during concurrent access
 
-// GameSession struct encapsulates all session data
-// use channels to receive deploy commands and stop signal
 type GameSession struct {
-	Mode         GameMode
-	Players      [2]*Player // two players
-	TroopSpecs   map[string]TroopSpec
-	TowerSpecs   map[string]TowerSpec
-	Commands     chan DeployCmd // incoming deploy commands
-	Done         chan struct{}  // signals end of game
-	TickInterval time.Duration  // for enhanced mode
+	Mode               GameMode
+	Players            [2]*Player // two players
+	TroopSpecs         map[string]TroopSpec
+	TowerSpecs         map[string]TowerSpec
+	Commands           chan DeployCmd // incoming deploy commands
+	Done               chan struct{}  // signals end of game
+	TickInterval       time.Duration  // for enhanced mode
+	justDestroyedTower bool           // tracks if a tower was just destroyed
 }
 
 // DeployCmd is issued by a client or AI to deploy a troop
@@ -43,10 +38,16 @@ type DeployCmd struct {
 	TroopName   string // e.g., "Pawn"
 }
 
-// ========== STATE END ============
+// GameState represents the current state of the game
+type GameState struct {
+	YourMana       int     `json:"your_mana"`
+	OpponentMana   int     `json:"opponent_mana"`
+	YourTowers     []Tower `json:"your_towers"`
+	OpponentTowers []Tower `json:"opponent_towers"`
+}
 
 // startGame launches the appropriate game loop based on mode
-func (gs *GameSession) startGame() {
+func (gs *GameSession) StartGame() {
 	switch gs.Mode {
 	case SimpleMode:
 		gs.simpleLoop()
@@ -84,8 +85,8 @@ func (gs *GameSession) simpleLoop() {
 
 // enhancedLoop runs real-time gameplay with mana regen and timeout
 func (gs *GameSession) enhancedLoop() {
-	ticker := time.NewTicker(gs.TickInterval) // regular ticks for mana and state updates【turn0search0】
-	timeout := time.After(3 * time.Minute)    // 3-minute match timer【turn0search9】
+	ticker := time.NewTicker(gs.TickInterval)
+	timeout := time.After(3 * time.Minute) // 3-minute match timer
 	defer ticker.Stop()
 
 	for {
@@ -106,7 +107,7 @@ func (gs *GameSession) enhancedLoop() {
 
 // tick handles periodic updates: mana regen and optional tower attacks
 func (gs *GameSession) tick() {
-	mutex.Lock() // protect shared updates【turn0search2】
+	mutex.Lock()
 	defer mutex.Unlock()
 	for i := range gs.Players {
 		p := gs.Players[i]
@@ -131,7 +132,7 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 	p.Mana -= spec.Mana
 	// apply troop action: attack or heal
 	if cmd.TroopName == "Queen" {
-		p.healWeakestTower(300)
+		p.HealWeakestTower(300)
 	} else {
 		gs.attackOpponentTower(cmd.PlayerIndex, spec)
 	}
@@ -139,14 +140,14 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 
 // attackOpponentTower resolves a troop attacking the next enemy tower
 func (gs *GameSession) attackOpponentTower(idx int, spec TroopSpec) {
-	target := gs.Players[1-idx].nextAliveTower()
+	target := gs.Players[1-idx].NextAliveTower()
 	dmg := spec.ATK - target.DEF
 	if dmg < 0 {
 		dmg = 0
 	}
 	target.HP -= dmg
 	if target.HP <= 0 {
-		gs.Players[1-idx].destroyTower(target)
+		gs.Players[1-idx].DestroyTower(target)
 		gs.justDestroyedTower = true
 	} else {
 		gs.justDestroyedTower = false
@@ -202,7 +203,7 @@ func (gs *GameSession) broadcastState() {
 // checkGameEnd returns true if a King Tower is destroyed
 func (gs *GameSession) checkGameEnd() bool {
 	for _, p := range gs.Players {
-		if p.kingTowerDestroyed() {
+		if p.KingTowerDestroyed() {
 			return true
 		}
 	}
@@ -249,7 +250,7 @@ func (gs *GameSession) evaluateWinner() {
 		return
 	}
 
-	// Send results to players
+	// Winner gets more EXP
 	if winner.Conn != nil {
 		SendPDU(winner.Conn, PDU{
 			Type: "game_end",
@@ -264,24 +265,17 @@ func (gs *GameSession) evaluateWinner() {
 	}
 }
 
-// atomicallySavePlayers persists players.json safely【turn0search15】
-func atomicSavePlayers(path string, data interface{}) error {
-	tmp := path + ".tmp"
-	f, err := os.Create(tmp)
-	if err != nil {
-		return err
+// NewGameSession creates a new game session
+func NewGameSession(mode GameMode, players [2]*Player,
+	troopSpecs map[string]TroopSpec,
+	towerSpecs map[string]TowerSpec) *GameSession {
+	return &GameSession{
+		Mode:         mode,
+		Players:      players,
+		TroopSpecs:   troopSpecs,
+		TowerSpecs:   towerSpecs,
+		Commands:     make(chan DeployCmd),
+		Done:         make(chan struct{}),
+		TickInterval: time.Second,
 	}
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(data); err != nil {
-		f.Close()
-		return err
-	}
-	f.Close()
-	return os.Rename(tmp, path)
-}
-
-// seed random once at startup to ensure varied gameplay【turn0search13】
-func init() {
-	rand.Seed(time.Now().UnixNano())
 }

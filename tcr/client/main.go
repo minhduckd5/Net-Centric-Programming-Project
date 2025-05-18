@@ -1,5 +1,5 @@
 // client/main.go
-package main
+package client
 
 import (
 	"bufio"
@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"tcr/common"
 )
 
 func main() {
@@ -31,7 +32,7 @@ func main() {
 	// Send login PDU
 	cred := fmt.Sprintf(`{"username":"%s","password":"%s"}`,
 		user[:len(user)-1], pass[:len(pass)-1])
-	SendPDU(conn, PDU{Type: "login", Data: json.RawMessage(cred)})
+	SendPDU(conn, common.PDU{Type: "login", Data: json.RawMessage(cred)})
 
 	// Await login_resp
 	pdu, err := ReceivePDU(conn)
@@ -77,7 +78,7 @@ func main() {
 
 		// Send deploy command
 		deployCmd := fmt.Sprintf(`{"troop":"%s"}`, input)
-		SendPDU(conn, PDU{Type: "deploy", Data: json.RawMessage(deployCmd)})
+		SendPDU(conn, common.PDU{Type: "deploy", Data: json.RawMessage(deployCmd)})
 	}
 }
 
