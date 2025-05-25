@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -20,6 +21,23 @@ const (
 
 // GameSession holds state for a single 1v1 match
 var mutex sync.Mutex // protects session state during concurrent access
+
+// Level represents a player's level and associated stats
+type Level struct {
+	Level      int     `json:"level"`
+	Exp        int     `json:"exp"`
+	NextLevel  int     `json:"next_level"`
+	Multiplier float64 `json:"multiplier"`
+}
+
+// Update Player struct
+// type Player struct {
+// 	Conn     net.Conn
+// 	Username string
+// 	Mana     int
+// 	Towers   []*Tower
+// 	Level    Level // Add level information
+// }
 
 type GameSession struct {
 	Mode               GameMode
@@ -141,16 +159,69 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 // attackOpponentTower resolves a troop attacking the next enemy tower
 func (gs *GameSession) attackOpponentTower(idx int, spec TroopSpec) {
 	target := gs.Players[1-idx].NextAliveTower()
-	dmg := spec.ATK - target.DEF
+
+	// Apply level multiplier to attack
+	baseATK := float64(spec.ATK) * gs.Players[idx].Level.Multiplier
+
+	// Calculate critical hit
+	isCrit := rand.Float64() < 0.1 // 10% crit chance
+	if isCrit {
+		baseATK *= 1.2 // 20% more damage on crit
+	}
+
+	// Calculate final damage
+	dmg := int(baseATK) - target.DEF
 	if dmg < 0 {
 		dmg = 0
 	}
+
 	target.HP -= dmg
 	if target.HP <= 0 {
 		gs.Players[1-idx].DestroyTower(target)
 		gs.justDestroyedTower = true
+
+		// Award EXP for tower destruction
+		gs.awardExp(idx, target)
 	} else {
 		gs.justDestroyedTower = false
+	}
+}
+
+// awardExp handles EXP gain and leveling
+func (gs *GameSession) awardExp(playerIdx int, tower *Tower) {
+	player := gs.Players[playerIdx]
+
+	// Award EXP based on tower type
+	expGain := 0
+	switch tower.Name {
+	case "King Tower":
+		expGain = 200
+	case "Guard Tower":
+		expGain = 100
+	}
+
+	// Add EXP and check for level up
+	player.Level.Exp += expGain
+	gs.checkLevelUp(player)
+}
+
+// checkLevelUp handles player level progression
+func (gs *GameSession) checkLevelUp(player *Player) {
+	for player.Level.Exp >= player.Level.NextLevel {
+		player.Level.Level++
+		player.Level.Exp -= player.Level.NextLevel
+		player.Level.NextLevel = int(float64(player.Level.NextLevel) * 1.1) // 10% increase
+		player.Level.Multiplier = 1.0 + (float64(player.Level.Level) * 0.1) // 10% per level
+
+		// Notify client of level up
+		if player.Conn != nil {
+			levelData := fmt.Sprintf(`{"level":%d,"exp":%d,"next_level":%d,"multiplier":%.2f}`,
+				player.Level.Level, player.Level.Exp, player.Level.NextLevel, player.Level.Multiplier)
+			SendPDU(player.Conn, PDU{
+				Type: "level_up",
+				Data: []byte(levelData),
+			})
+		}
 	}
 }
 
@@ -269,12 +340,23 @@ func (gs *GameSession) evaluateWinner() {
 func NewGameSession(mode GameMode, players [2]*Player,
 	troopSpecs map[string]TroopSpec,
 	towerSpecs map[string]TowerSpec) *GameSession {
+
+	// Initialize player levels
+	for i := range players {
+		players[i].Level = Level{
+			Level:      1,
+			Exp:        0,
+			NextLevel:  100,
+			Multiplier: 1.0,
+		}
+	}
+
 	return &GameSession{
 		Mode:         mode,
 		Players:      players,
 		TroopSpecs:   troopSpecs,
 		TowerSpecs:   towerSpecs,
-		Commands:     make(chan DeployCmd),
+		Commands:     make(chan DeployCmd, 100),
 		Done:         make(chan struct{}),
 		TickInterval: time.Second,
 	}

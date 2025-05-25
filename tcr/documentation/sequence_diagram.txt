@@ -1,0 +1,103 @@
+Text-Based Clash Royale (TCR) - Sequence Diagrams
+=============================================
+
+1. Game Initialization Sequence
+------------------------------
+Client                    Server                    GameManager
+  |                          |                          |
+  |-- Login Request -------->|                          |
+  |                          |-- Validate Credentials ->|
+  |                          |<-- Auth Result ----------|
+  |<-- Login Response -------|                          |
+  |                          |                          |
+  |-- Matchmaking Request -->|                          |
+  |                          |-- Add to Queue --------->|
+  |                          |                          |
+  |                          |<-- Match Found ----------|
+  |<-- Game Start -----------|                          |
+  |                          |                          |
+
+2. Game Play Sequence
+--------------------
+Client1                   Server                    Client2
+  |                          |                          |
+  |-- Deploy Troop -------->|                          |
+  |                          |-- Process Action ------->|
+  |                          |                          |
+  |<-- Game State Update ---|                          |
+  |                          |<-- Game State Update ----|
+  |                          |                          |
+  |                          |-- Deploy Troop --------->|
+  |                          |                          |
+  |<-- Game State Update ---|                          |
+  |                          |<-- Game State Update ----|
+  |                          |                          |
+
+3. Game End Sequence
+-------------------
+Client1                   Server                    Client2
+  |                          |                          |
+  |                          |-- Check Win Condition -->|
+  |                          |                          |
+  |<-- Game End ------------|                          |
+  |                          |<-- Game End -------------|
+  |                          |                          |
+  |<-- EXP Update ----------|                          |
+  |                          |<-- EXP Update -----------|
+  |                          |                          |
+
+4. Error Handling Sequence
+-------------------------
+Client                    Server
+  |                          |
+  |-- Invalid Action ------->|
+  |                          |
+  |<-- Error Response ------|
+  |                          |
+  |-- Retry Action -------->|
+  |                          |
+  |<-- Success Response ----|
+  |                          |
+
+5. Reconnection Sequence
+-----------------------
+Client                    Server
+  |                          |
+  |-- Reconnect Request ---->|
+  |                          |
+  |<-- Session State -------|
+  |                          |
+  |-- Resume Game --------->|
+  |                          |
+  |<-- Game State Update ---|
+  |                          |
+
+6. Mana System Sequence
+----------------------
+Client                    Server
+  |                          |
+  |                          |-- Mana Regen Timer ----->|
+  |                          |                          |
+  |<-- Mana Update ---------|                          |
+  |                          |                          |
+  |-- Deploy Troop -------->|                          |
+  |                          |-- Check Mana Cost ------>|
+  |                          |                          |
+  |<-- Mana Update ---------|                          |
+  |                          |                          |
+
+7. Leveling System Sequence
+--------------------------
+Client                    Server
+  |                          |
+  |-- Game End ------------>|                          |
+  |                          |-- Calculate EXP -------->|
+  |                          |                          |
+  |<-- EXP Update ----------|                          |
+  |                          |                          |
+  |                          |-- Check Level Up ------->|
+  |                          |                          |
+  |<-- Level Up ------------|                          |
+  |                          |                          |
+  |<-- Stats Update -------|                          |
+  |                          |                          | 

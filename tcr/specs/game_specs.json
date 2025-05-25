@@ -1,0 +1,77 @@
+{
+    "troops": {
+        "knight": {
+            "name": "Knight",
+            "type": "ground",
+            "health": 1000,
+            "damage": 100,
+            "range": 1.0,
+            "speed": 1.0,
+            "attack_speed": 1.0,
+            "cost": 3,
+            "target": "ground"
+        },
+        "archer": {
+            "name": "Archer",
+            "type": "ground",
+            "health": 500,
+            "damage": 50,
+            "range": 5.0,
+            "speed": 0.8,
+            "attack_speed": 1.2,
+            "cost": 3,
+            "target": "both"
+        },
+        "giant": {
+            "name": "Giant",
+            "type": "ground",
+            "health": 2000,
+            "damage": 150,
+            "range": 1.0,
+            "speed": 0.6,
+            "attack_speed": 1.5,
+            "cost": 5,
+            "target": "ground"
+        },
+        "minion": {
+            "name": "Minion",
+            "type": "air",
+            "health": 300,
+            "damage": 40,
+            "range": 1.0,
+            "speed": 1.2,
+            "attack_speed": 1.0,
+            "cost": 3,
+            "target": "both"
+        }
+    },
+    "towers": {
+        "king_tower": {
+            "name": "King Tower",
+            "type": "king",
+            "health": 5000,
+            "damage": 200,
+            "range": 7.0,
+            "attack_speed": 1.0,
+            "target": "both"
+        },
+        "princess_tower": {
+            "name": "Princess Tower",
+            "type": "princess",
+            "health": 2000,
+            "damage": 100,
+            "range": 7.0,
+            "attack_speed": 1.0,
+            "target": "both"
+        },
+        "cannon": {
+            "name": "Cannon",
+            "type": "cannon",
+            "health": 1000,
+            "damage": 80,
+            "range": 5.0,
+            "attack_speed": 1.0,
+            "target": "ground"
+        }
+    }
+} 

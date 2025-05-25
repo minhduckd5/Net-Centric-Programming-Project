@@ -1,0 +1,20 @@
+{
+    "server": {
+        "host": "localhost",
+        "port": 9000,
+        "read_timeout": 30,
+        "write_timeout": 30,
+        "idle_timeout": 120
+    },
+    "game": {
+        "tick_interval_ms": 100,
+        "match_timeout_sec": 180,
+        "max_players": 2,
+        "log_level": "debug"
+    },
+    "security": {
+        "rate_limit": 100,
+        "rate_window_sec": 60,
+        "password_salt": "dev_salt_change_in_production"
+    }
+} 

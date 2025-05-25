@@ -1,0 +1,142 @@
+Text-Based Clash Royale (TCR) - Deployment & Execution Instructions
+=============================================================
+
+1. Prerequisites
+---------------
+- Go 1.16 or higher
+- Git (for cloning the repository)
+- Basic knowledge of command line operations
+
+2. Installation
+--------------
+2.1 Clone the Repository
+    ```bash
+    git clone <repository-url>
+    cd tcr
+    ```
+
+2.2 Install Dependencies
+    ```bash
+    go mod download
+    ```
+
+3. Configuration
+---------------
+3.1 Server Configuration
+    - Edit config/dev.json for development settings
+    - Edit config/prod.json for production settings
+    - Required settings:
+      * Server host and port
+      * Game settings
+      * Logging level
+
+3.2 Game Specifications
+    - Edit specs/game_specs.json to modify:
+      * Troop specifications
+      * Tower specifications
+      * Game balance parameters
+
+3.3 User Data
+    - Edit data/players.json to add/modify:
+      * User accounts
+      * Player statistics
+      * Experience points
+
+4. Building
+----------
+4.1 Build Server
+    ```bash
+    go build -o tcr-server server/main.go
+    ```
+
+4.2 Build Client
+    ```bash
+    go build -o tcr-client client/main.go
+    ```
+
+5. Running the Game
+------------------
+5.1 Start the Server
+    ```bash
+    # Development mode
+    ./tcr-server -config config/dev.json
+
+    # Production mode
+    ./tcr-server -config config/prod.json
+    ```
+
+5.2 Start the Client
+    ```bash
+    # Connect to local server
+    ./tcr-client -server localhost:9000
+
+    # Connect to remote server
+    ./tcr-client -server <server-ip>:9000
+    ```
+
+6. Directory Structure
+---------------------
+tcr/
+├── client/           # Client source code
+├── server/           # Server source code
+├── config/           # Configuration files
+│   ├── dev.json
+│   └── prod.json
+├── specs/            # Game specifications
+│   └── game_specs.json
+├── data/            # Game data
+│   └── players.json
+└── logs/            # Log files
+
+7. Logging
+----------
+7.1 Log Files
+    - Server logs: logs/server.log
+    - Client logs: logs/client.log
+    - Error logs: logs/error.log
+
+7.2 Log Levels
+    - DEBUG: Detailed debugging information
+    - INFO: General operational information
+    - WARN: Warning messages
+    - ERROR: Error messages
+
+8. Troubleshooting
+-----------------
+8.1 Common Issues
+    - Connection refused: Check server is running
+    - Authentication failed: Verify credentials
+    - Game not starting: Check configuration files
+
+8.2 Debug Mode
+    ```bash
+    # Enable debug logging
+    ./tcr-server -config config/dev.json -debug
+    ./tcr-client -server localhost:9000 -debug
+    ```
+
+9. Security Considerations
+-------------------------
+9.1 File Permissions
+    - Set appropriate permissions for configuration files
+    - Protect user data files
+    - Secure log files
+
+9.2 Network Security
+    - Use firewall rules
+    - Implement rate limiting
+    - Monitor for suspicious activity
+
+10. Maintenance
+--------------
+10.1 Regular Tasks
+    - Monitor log files
+    - Backup user data
+    - Update game specifications
+    - Check server performance
+
+10.2 Backup
+    - Regular backup of:
+      * User data
+      * Configuration files
+      * Game specifications 

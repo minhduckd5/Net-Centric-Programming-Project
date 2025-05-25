@@ -20,6 +20,7 @@ type Player struct {
 	Username string
 	Mana     int
 	Towers   []*Tower
+	Level    Level
 }
 
 // Tower represents a game tower

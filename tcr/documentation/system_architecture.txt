@@ -1,0 +1,92 @@
+Text-Based Clash Royale (TCR) - System Architecture
+================================================
+
+1. Overview
+-----------
+TCR is a client-server based multiplayer game implemented in Go. The system uses TCP for reliable communication between clients and the server.
+
+2. System Components
+-------------------
+2.1 Server Components
+    - GameManager: Manages game sessions and matchmaking
+    - GameSession: Handles individual game instances
+    - ClientHandler: Manages client connections and communication
+    - ConfigManager: Handles configuration and specifications
+
+2.2 Client Components
+    - GameClient: Main client interface
+    - ConnectionManager: Handles server communication
+    - GameState: Manages local game state
+    - UserInterface: Handles user input and display
+
+3. Communication Architecture
+----------------------------
+3.1 Protocol
+    - TCP for reliable communication
+    - JSON for data serialization
+    - Custom PDU format for message exchange
+
+3.2 Network Flow
+    - Client connects to server
+    - Authentication process
+    - Matchmaking
+    - Game session establishment
+    - Real-time game state updates
+
+4. Data Management
+-----------------
+4.1 Storage
+    - JSON files for:
+      * User data
+      * Game specifications
+      * Configuration
+    - In-memory game state
+
+4.2 Data Flow
+    - Server maintains game state
+    - Clients receive state updates
+    - Periodic state synchronization
+
+5. Security
+-----------
+5.1 Authentication
+    - Username/password based
+    - Password hashing
+    - Session management
+
+5.2 Data Protection
+    - Input validation
+    - State verification
+    - Anti-cheat measures
+
+6. Scalability
+--------------
+6.1 Session Management
+    - Multiple concurrent games
+    - Efficient resource usage
+    - Cleanup of completed sessions
+
+6.2 Performance
+    - Goroutine-based concurrency
+    - Efficient state updates
+    - Resource optimization
+
+7. Error Handling
+----------------
+7.1 Connection Issues
+    - Automatic reconnection
+    - State recovery
+    - Error logging
+
+7.2 Game State
+    - Validation checks
+    - State recovery
+    - Error reporting
+
+8. Future Considerations
+-----------------------
+8.1 Potential Improvements
+    - UDP for real-time updates
+    - WebSocket support
+    - Database integration
+    - Load balancing 

@@ -1,0 +1,166 @@
+Text-Based Clash Royale (TCR) - PDU Description
+============================================
+
+1. PDU Structure
+----------------
+All PDUs follow this JSON structure:
+{
+    "type": string,    // Message type
+    "data": object    // Message payload
+}
+
+2. Message Types
+---------------
+2.1 Authentication
+    - LOGIN_REQUEST
+    - LOGIN_RESPONSE
+    - LOGOUT_REQUEST
+    - LOGOUT_RESPONSE
+
+2.2 Game Management
+    - MATCHMAKING_REQUEST
+    - MATCHMAKING_RESPONSE
+    - GAME_START
+    - GAME_END
+    - GAME_STATE_UPDATE
+
+2.3 Game Actions
+    - DEPLOY_TROOP
+    - TOWER_ATTACK
+    - TROOP_ATTACK
+    - MANA_UPDATE
+    - EXP_UPDATE
+
+2.4 System Messages
+    - ERROR
+    - PING
+    - PONG
+    - DISCONNECT
+
+3. PDU Details
+-------------
+3.1 Authentication PDUs
+    LOGIN_REQUEST:
+    {
+        "type": "LOGIN_REQUEST",
+        "data": {
+            "username": string,
+            "password": string
+        }
+    }
+
+    LOGIN_RESPONSE:
+    {
+        "type": "LOGIN_RESPONSE",
+        "data": {
+            "success": boolean,
+            "message": string,
+            "user": {
+                "username": string,
+                "experience": int
+            }
+        }
+    }
+
+3.2 Game Management PDUs
+    MATCHMAKING_REQUEST:
+    {
+        "type": "MATCHMAKING_REQUEST",
+        "data": {
+            "username": string
+        }
+    }
+
+    GAME_START:
+    {
+        "type": "GAME_START",
+        "data": {
+            "session_id": string,
+            "players": [
+                {
+                    "username": string,
+                    "towers": [
+                        {
+                            "type": string,
+                            "hp": int,
+                            "atk": int,
+                            "def": int
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+
+3.3 Game Action PDUs
+    DEPLOY_TROOP:
+    {
+        "type": "DEPLOY_TROOP",
+        "data": {
+            "troop_type": string,
+            "position": {
+                "x": int,
+                "y": int
+            }
+        }
+    }
+
+    GAME_STATE_UPDATE:
+    {
+        "type": "GAME_STATE_UPDATE",
+        "data": {
+            "turn": int,
+            "mana": int,
+            "troops": [
+                {
+                    "type": string,
+                    "hp": int,
+                    "position": {
+                        "x": int,
+                        "y": int
+                    }
+                }
+            ],
+            "towers": [
+                {
+                    "type": string,
+                    "hp": int
+                }
+            ]
+        }
+    }
+
+4. Error Handling
+----------------
+ERROR PDU:
+{
+    "type": "ERROR",
+    "data": {
+        "code": int,
+        "message": string,
+        "details": object
+    }
+}
+
+Error Codes:
+- 1000: Authentication Error
+- 2000: Game State Error
+- 3000: Network Error
+- 4000: System Error
+
+5. Sequence Examples
+-------------------
+5.1 Login Sequence
+    Client -> Server: LOGIN_REQUEST
+    Server -> Client: LOGIN_RESPONSE
+
+5.2 Game Start Sequence
+    Client -> Server: MATCHMAKING_REQUEST
+    Server -> Client: GAME_START
+    Server -> Client: GAME_STATE_UPDATE
+
+5.3 Game Action Sequence
+    Client -> Server: DEPLOY_TROOP
+    Server -> Client: GAME_STATE_UPDATE
+    Server -> Client: TROOP_ATTACK
+    Server -> Client: GAME_STATE_UPDATE 
