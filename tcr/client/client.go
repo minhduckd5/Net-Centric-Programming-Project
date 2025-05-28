@@ -4,8 +4,10 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/signal"
@@ -59,7 +61,9 @@ func (c *GameClient) login() error {
 	c.password = strings.TrimSpace(readLine(c.reader))
 
 	cred := fmt.Sprintf(`{"username":"%s","password":"%s"}`, c.username, c.password)
-	if err := server.SendPDU(c.conn, server.PDU{Type: "login", Data: json.RawMessage(cred)}); err != nil {
+	if err := server.SendPDU(c.conn, server.PDU{
+		Type: "login",
+		Data: json.RawMessage(cred)}); err != nil {
 		return fmt.Errorf("login send error: %v", err)
 	}
 
@@ -177,6 +181,12 @@ func (c *GameClient) run() error {
 	for {
 		pdu, err := server.ReceivePDU(c.conn)
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				// Now this will correctly catch wrapped EOFs
+				fmt.Println("Waiting for server message...")
+				time.Sleep(1 * time.Second)
+				continue
+			}
 			if c.inGame {
 				fmt.Printf("Connection lost. Attempting to reconnect...\n")
 				if err := c.connect(); err != nil {
