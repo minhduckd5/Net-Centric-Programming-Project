@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"tcr/server"
 	"time"
 )
 
@@ -58,11 +59,11 @@ func (c *GameClient) login() error {
 	c.password = strings.TrimSpace(readLine(c.reader))
 
 	cred := fmt.Sprintf(`{"username":"%s","password":"%s"}`, c.username, c.password)
-	if err := SendPDU(c.conn, PDU{Type: "login", Data: json.RawMessage(cred)}); err != nil {
+	if err := server.SendPDU(c.conn, server.PDU{Type: "login", Data: json.RawMessage(cred)}); err != nil {
 		return fmt.Errorf("login send error: %v", err)
 	}
 
-	pdu, err := ReceivePDU(c.conn)
+	pdu, err := server.ReceivePDU(c.conn)
 	if err != nil {
 		return fmt.Errorf("login response error: %v", err)
 	}
@@ -80,7 +81,7 @@ func (c *GameClient) login() error {
 	return nil
 }
 
-func (c *GameClient) handleGameStart(pdu PDU) {
+func (c *GameClient) handleGameStart(pdu server.PDU) {
 	var startData struct {
 		Mode    string `json:"mode"`
 		Players []int  `json:"players"`
@@ -94,11 +95,11 @@ func (c *GameClient) handleGameStart(pdu PDU) {
 	fmt.Printf("\n=== Game Started ===\n")
 	fmt.Printf("Mode: %s\n", startData.Mode)
 	fmt.Printf("Players: %v\n", startData.Players)
-	fmt.Println("==================\n")
+	fmt.Println("==================")
 }
 
-func (c *GameClient) handleStateUpdate(pdu PDU) {
-	var state GameState
+func (c *GameClient) handleStateUpdate(pdu server.PDU) {
+	var state server.GameState
 	if err := json.Unmarshal(pdu.Data, &state); err != nil {
 		fmt.Printf("Error parsing state update: %v\n", err)
 		return
@@ -132,7 +133,7 @@ func (c *GameClient) handleStateUpdate(pdu PDU) {
 	fmt.Println("\nEnter troop number or 'quit' to exit")
 }
 
-func (c *GameClient) handleGameEnd(pdu PDU) {
+func (c *GameClient) handleGameEnd(pdu server.PDU) {
 	var endData struct {
 		Result string `json:"result"`
 		Exp    int    `json:"exp"`
@@ -145,7 +146,7 @@ func (c *GameClient) handleGameEnd(pdu PDU) {
 	fmt.Printf("\n=== Game Over ===\n")
 	fmt.Printf("Result: %s\n", endData.Result)
 	fmt.Printf("EXP Gained: %d\n", endData.Exp)
-	fmt.Println("================\n")
+	fmt.Println("================")
 
 	c.inGame = false
 }
@@ -174,7 +175,7 @@ func (c *GameClient) run() error {
 
 	// Main game loop
 	for {
-		pdu, err := ReceivePDU(c.conn)
+		pdu, err := server.ReceivePDU(c.conn)
 		if err != nil {
 			if c.inGame {
 				fmt.Printf("Connection lost. Attempting to reconnect...\n")
@@ -216,7 +217,7 @@ func (c *GameClient) run() error {
 
 			if troop, ok := troopMap[input]; ok {
 				deployCmd := fmt.Sprintf(`{"troop":"%s"}`, troop)
-				if err := SendPDU(c.conn, PDU{Type: "deploy", Data: json.RawMessage(deployCmd)}); err != nil {
+				if err := server.SendPDU(c.conn, server.PDU{Type: "deploy", Data: json.RawMessage(deployCmd)}); err != nil {
 					fmt.Printf("Error sending deploy command: %v\n", err)
 				}
 			} else {

@@ -1,0 +1,14 @@
+{
+  "player1": {
+    "username": "player1",
+    "password_hash": "123456777",
+    "level": 1,
+    "exp": 0
+  },
+  "player2": {
+    "username": "player2",
+    "password_hash": "123456888",
+    "level": 1,
+    "exp": 0
+  }
+}

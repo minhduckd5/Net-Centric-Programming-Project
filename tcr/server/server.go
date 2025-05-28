@@ -1,5 +1,5 @@
 // server.go
-package main
+package server
 
 import (
 	// "tcr/common"
@@ -95,4 +95,5 @@ func (gm *GameManager) StartMatchmaking() {
 			}()
 		}
 	}()
-}
+	}
+

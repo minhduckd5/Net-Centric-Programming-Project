@@ -1,7 +1,7 @@
 // game.go
 // Core game logic for Text-Based Clash Royale (TCR)
 
-package main
+package server
 
 import (
 	"encoding/json"

@@ -1,5 +1,5 @@
 // network.go
-package main
+package server
 
 import (
 	"bufio"
