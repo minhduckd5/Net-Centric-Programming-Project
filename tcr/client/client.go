@@ -180,6 +180,7 @@ func (c *GameClient) run() error {
 	// Main game loop
 	for {
 		pdu, err := server.ReceivePDU(c.conn)
+		fmt.Print(pdu)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				// Now this will correctly catch wrapped EOFs
