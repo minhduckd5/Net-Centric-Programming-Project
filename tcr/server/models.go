@@ -76,8 +76,8 @@ func (p *Player) HealWeakestTower(amount int) {
 				weakest.Health = 6000
 			}
 		} else if weakest.Type == "guard" {
-			if weakest.Health >= 2500 {
-				weakest.Health = 2500
+			if weakest.Health >= 3000 {
+				weakest.Health = 3000
 			}
 		}
 		log.Println("Queen Heal weaknest tower '", weakest.Name, "' for ", amount, ". New Health is: ", weakest.Health)

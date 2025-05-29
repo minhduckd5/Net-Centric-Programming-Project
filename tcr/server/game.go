@@ -105,7 +105,8 @@ func (gs *GameSession) enhancedLoop() {
 	ticker := time.NewTicker(gs.TickInterval)
 	timeout := time.After(3 * time.Minute) // 3-minute match timer
 	defer ticker.Stop()
-
+	defer gs.Players[0].Conn.Close()
+	defer gs.Players[1].Conn.Close()
 	for {
 		select {
 		case <-ticker.C:
@@ -241,12 +242,12 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 		go func(troop *TroopInstance, playerIdx int) {
 			for {
 				mutex.Lock()
-				if troop.Health <= 0 {
+				if troop.Health < 0 {
 					mutex.Unlock()
 					log.Printf("Troop %s is dead, stopping attack loop\n", troop.Spec.Name)
 					break
 				}
-				p.HealWeakestTower(int(400 * p.Level.Multiplier))
+				p.HealWeakestTower(int(300 * p.Level.Multiplier))
 				mutex.Unlock()
 				time.Sleep(2 * time.Second)
 			}
@@ -403,10 +404,16 @@ func (gs *GameSession) broadcastState() {
 	// Send to both players
 	for _, p := range gs.Players {
 		if p.Conn != nil {
-			SendPDU(p.Conn, PDU{
+			err := SendPDU(p.Conn, PDU{
 				Type: "state_update",
 				Data: data,
 			})
+			if err != nil {
+				log.Printf("Player %s disconnected: %v\n", p.Username, err)
+				gs.evaluateWinner()
+				close(gs.Done)
+				return
+			}
 		}
 	}
 }

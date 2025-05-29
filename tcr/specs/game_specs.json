@@ -3,21 +3,21 @@
         "pawn": {
             "name": "Pawn",
             "health": 500,
-            "damage": 150,
+            "damage": 350,
             "defence": 100,
             "cost": 3
         },
         "bishop": {
             "name": "Bishop",
             "health": 1000,
-            "damage": 200,
+            "damage": 300,
             "defence": 150,
             "cost": 4
         },
         "rook": {
             "name": "Rook",
             "health": 2500,
-            "damage": 200,
+            "damage": 250,
             "defence": 200,
             "cost": 5
         },
@@ -30,9 +30,9 @@
         },
         "prince": {
             "name": "Prince",
-            "health": 5000,
+            "health": 3000,
             "damage": 350,
-            "defence": 300,
+            "defence": 200,
             "cost": 7
         },
         "queen": {
@@ -45,21 +45,21 @@
         "archer": {
             "name": "Archer",
             "health": 1200,
-            "damage": 200,
+            "damage": 350,
             "defence": 50,
             "cost": 3
         },
         "giant": {
             "name": "Giant",
-            "health": 5000,
-            "damage": 150,
-            "defence": 350,
-            "cost": 7
+            "health": 4000,
+            "damage": 250,
+            "defence": 250,
+            "cost": 8
         },
         "minion": {
             "name": "Minion",
             "health": 500,
-            "damage": 300,
+            "damage": 350,
             "defence": 40,
             "cost": 3
         }
@@ -70,14 +70,14 @@
             "type": "king",
             "health": 6000,
             "damage": 500,
-            "defence": 200
+            "defence": 300
         },
         "guard_tower": {
             "name": "Guard Tower",
             "type": "guard",
             "health": 3000,
             "damage": 350,
-            "defence": 100
+            "defence": 200
         }
     }
 }
