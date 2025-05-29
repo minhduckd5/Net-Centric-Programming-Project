@@ -3,12 +3,16 @@
     "username": "player1",
     "password_hash": "123456777",
     "level": 1,
-    "exp": 0
+    "exp": 0,
+    "next_level": 2,
+    "multiplier": 2
   },
   "player2": {
     "username": "player2",
     "password_hash": "123456888",
     "level": 1,
-    "exp": 0
+    "exp": 0,
+    "next_level": 2,
+    "multiplier": 2
   }
 }

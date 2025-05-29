@@ -5,49 +5,27 @@ import (
 	"encoding/json"
 	"net"
 	"os"
+	"tcr/specs"
 )
 
 // User represents a player account
 type User struct {
-	Username     string `json:"username"`
-	PasswordHash string `json:"password_hash"`
-	Userlevel    int    `json:"level"`
-	Experience   int    `json:"experience"`
+	Username     string  `json:"username"`
+	PasswordHash string  `json:"password_hash"`
+	Level        int     `json:"level"`
+	Exp          int     `json:"exp"`
+	NextLevel    int     `json:"next_level"`
+	Multiplier   float64 `json:"multiplier"`
 }
 
 // Player represents a player in a game session
 type Player struct {
-	Conn     net.Conn
-	Username string
-	Mana     int
-	Towers   []*Tower
-	Level    Level
-}
-
-// Tower represents a game tower
-type Tower struct {
-	Name string `json:"name"`
-	HP   int    `json:"hp"`
-	DEF  int    `json:"def"`
-	ATK  int    `json:"atk"`
-}
-
-// TroopSpec defines the stats for a troop type
-type TroopSpec struct {
-	HP   int `json:"hp"`
-	ATK  int `json:"atk"`
-	DEF  int `json:"def"`
-	Mana int `json:"mana"`
-	EXP  int `json:"exp"`
-}
-
-// TowerSpec defines the stats for a tower type
-type TowerSpec struct {
-	HP   int     `json:"hp"`
-	ATK  int     `json:"atk"`
-	DEF  int     `json:"def"`
-	Crit float64 `json:"crit"`
-	EXP  int     `json:"exp"`
+	Conn        net.Conn
+	Username    string
+	Mana        int
+	Towers      []*specs.TowerSpec
+	Level       Level
+	ActiveTroops []*TroopInstance // Or a similar struct you define
 }
 
 // PDU represents a Protocol Data Unit for client-server communication
@@ -57,22 +35,22 @@ type PDU struct {
 }
 
 // Methods for Player
-func (p *Player) NextAliveTower() *Tower {
+func (p *Player) NextAliveTower() *specs.TowerSpec {
 	for _, t := range p.Towers {
-		if t.HP > 0 {
+		if t.Health > 0 {
 			return t
 		}
 	}
 	return nil
 }
 
-func (p *Player) DestroyTower(t *Tower) {
-	t.HP = 0
+func (p *Player) DestroyTower(t *specs.TowerSpec) {
+	t.Health = 0
 }
 
 func (p *Player) KingTowerDestroyed() bool {
 	for _, t := range p.Towers {
-		if t.Name == "King Tower" && t.HP <= 0 {
+		if t.Name == "King Tower" && t.Health <= 0 {
 			return true
 		}
 	}
@@ -80,16 +58,16 @@ func (p *Player) KingTowerDestroyed() bool {
 }
 
 func (p *Player) HealWeakestTower(amount int) {
-	var weakest *Tower
+	var weakest *specs.TowerSpec
 	minHP := 999999
 	for _, t := range p.Towers {
-		if t.HP > 0 && t.HP < minHP {
+		if t.Health > 0 && t.Health < minHP {
 			weakest = t
-			minHP = t.HP
+			minHP = t.Health
 		}
 	}
 	if weakest != nil {
-		weakest.HP += amount
+		weakest.Health += amount
 	}
 }
 
@@ -104,26 +82,4 @@ func LoadUsers(filename string) (map[string]User, error) {
 		return nil, err
 	}
 	return users, nil
-}
-
-// LoadSpecs reads troop and tower specifications from a JSON file
-func LoadSpecs(filename string, troops map[string]TroopSpec, towers map[string]TowerSpec) error {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return err
-	}
-	var specs struct {
-		Troops map[string]TroopSpec `json:"troops"`
-		Towers map[string]TowerSpec `json:"towers"`
-	}
-	if err := json.Unmarshal(data, &specs); err != nil {
-		return err
-	}
-	for k, v := range specs.Troops {
-		troops[k] = v
-	}
-	for k, v := range specs.Towers {
-		towers[k] = v
-	}
-	return nil
 }

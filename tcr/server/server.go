@@ -32,27 +32,35 @@ func NewGameManager(specs *specs.Specs, config *config.Config) *GameManager {
 }
 
 // convertSpecs converts specs package types to game types
-func convertSpecs(specs *specs.Specs) (map[string]TroopSpec, map[string]TowerSpec) {
-	troopSpecs := make(map[string]TroopSpec)
-	towerSpecs := make(map[string]TowerSpec)
+func convertSpecs(s *specs.Specs) (map[string]specs.TroopSpec, map[string]specs.TowerSpec) {
+	troopSpecs := make(map[string]specs.TroopSpec)
+	towerSpecs := make(map[string]specs.TowerSpec)
 
-	for k, v := range specs.Troops {
-		troopSpecs[k] = TroopSpec{
-			HP:   v.Health,
-			ATK:  v.Damage,
-			DEF:  0, // Default defense
-			Mana: v.Cost,
-			EXP:  0, // Default experience
+	for k, v := range s.Troops {
+		troopSpecs[k] = specs.TroopSpec{
+			Name:        v.Name,
+			Type:        v.Type,
+			Health:      v.Health,
+			Damage:      v.Damage,
+			Defence:     v.Defence,
+			Range:       v.Range,
+			Speed:       v.Speed,
+			AttackSpeed: v.AttackSpeed,
+			Cost:        v.Cost,
+			Target:      v.Target,
 		}
 	}
 
-	for k, v := range specs.Towers {
-		towerSpecs[k] = TowerSpec{
-			HP:   v.Health,
-			ATK:  v.Damage,
-			DEF:  0,   // Default defense
-			Crit: 0.1, // Default crit chance
-			EXP:  0,   // Default experience
+	for k, v := range s.Towers {
+		towerSpecs[k] = specs.TowerSpec{
+			Name:        v.Name,
+			Type:        v.Type,
+			Health:      v.Health,
+			Damage:      v.Damage,
+			Defence:     v.Defence,
+			Range:       v.Range,
+			AttackSpeed: v.AttackSpeed,
+			Target:      v.Target,
 		}
 	}
 
@@ -78,7 +86,7 @@ func (gm *GameManager) StartMatchmaking() {
 			troopSpecs, towerSpecs := convertSpecs(gm.specs)
 
 			// Initialize game session
-			session := NewGameSession(EnhancedMode, players, troopSpecs, towerSpecs)
+			session := NewGameSession(players, troopSpecs, towerSpecs)
 
 			// Store session
 			gm.mutex.Lock()
@@ -95,5 +103,4 @@ func (gm *GameManager) StartMatchmaking() {
 			}()
 		}
 	}()
-	}
-
+}

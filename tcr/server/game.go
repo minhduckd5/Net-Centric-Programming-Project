@@ -6,17 +6,12 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
+	"net"
 	"sync"
+	"tcr/specs"
 	"time"
-)
-
-// GameMode indicates simple (turn-based) or enhanced (continuous)
-type GameMode int
-
-const (
-	SimpleMode GameMode = iota
-	EnhancedMode
 )
 
 // GameSession holds state for a single 1v1 match
@@ -40,14 +35,19 @@ type Level struct {
 // }
 
 type GameSession struct {
-	Mode               GameMode
 	Players            [2]*Player // two players
-	TroopSpecs         map[string]TroopSpec
-	TowerSpecs         map[string]TowerSpec
+	TroopSpecs         map[string]specs.TroopSpec
+	TowerSpecs         map[string]specs.TowerSpec
 	Commands           chan DeployCmd // incoming deploy commands
 	Done               chan struct{}  // signals end of game
 	TickInterval       time.Duration  // for enhanced mode
 	justDestroyedTower bool           // tracks if a tower was just destroyed
+}
+
+type TroopInstance struct {
+	Spec   specs.TroopSpec
+	Health int
+	// Possibly: Position, OwnerIndex, SpawnTime, etc.
 }
 
 // DeployCmd is issued by a client or AI to deploy a troop
@@ -58,47 +58,45 @@ type DeployCmd struct {
 
 // GameState represents the current state of the game
 type GameState struct {
-	YourMana       int     `json:"your_mana"`
-	OpponentMana   int     `json:"opponent_mana"`
-	YourTowers     []Tower `json:"your_towers"`
-	OpponentTowers []Tower `json:"opponent_towers"`
+	YourMana      int               `json:"your_mana"`
+	OpponentMana  int               `json:"opponent_mana"`
+	Player1Towers []specs.TowerSpec `json:"your_towers"`
+	Player2Towers []specs.TowerSpec `json:"opponent_towers"`
 }
 
 // startGame launches the appropriate game loop based on mode
 func (gs *GameSession) StartGame() {
-	switch gs.Mode {
-	case SimpleMode:
-		gs.simpleLoop()
-	case EnhancedMode:
-		gs.enhancedLoop()
-	}
-}
+	for i, player := range gs.Players {
+		go func(index int, conn net.Conn) {
+			for {
+				pdu, err := ReceivePDU(conn)
+				if err != nil {
+					log.Printf("Error receiving PDU: %v", err)
+					return
+				}
 
-// simpleLoop runs turn-based gameplay
-func (gs *GameSession) simpleLoop() {
-	current := rand.Intn(2) // random start; seed earlier
-	for {
-		select {
-		case cmd := <-gs.Commands:
-			if cmd.PlayerIndex != current {
-				// ignore commands out of turn
-				continue
+				switch pdu.Type {
+				case "deploy":
+					var payload struct {
+						Troop string `json:"troop"`
+					}
+					if err := json.Unmarshal(pdu.Data, &payload); err != nil {
+						log.Println("Invalid deploy payload:", err)
+						continue
+					}
+
+					gs.Commands <- DeployCmd{
+						PlayerIndex: index,
+						TroopName:   payload.Troop,
+					}
+				}
 			}
-			// process deploy
-			gs.handleDeploy(cmd)
-			// if no tower destroyed, switch turn
-			if !gs.justDestroyedTower {
-				current = 1 - current
-			}
-			// check win condition
-			if gs.checkGameEnd() {
-				close(gs.Done)
-				return
-			}
-		case <-gs.Done:
-			return
-		}
+		}(i, player.Conn)
 	}
+
+	// Start game loop
+	gs.enhancedLoop()
+
 }
 
 // enhancedLoop runs real-time gameplay with mana regen and timeout
@@ -111,12 +109,29 @@ func (gs *GameSession) enhancedLoop() {
 		select {
 		case <-ticker.C:
 			gs.tick() // regen mana, tower attacks, send state
+
+			// 🔽 Check if game has ended after tick
+			if gs.checkGameEnd() {
+				gs.evaluateWinner()
+				close(gs.Done)
+				return
+			}
+
 		case cmd := <-gs.Commands:
-			gs.handleDeploy(cmd) // immediate deploy handling
+			gs.handleDeploy(cmd)
+
+			// 🔽 Check if game has ended after deploy
+			if gs.checkGameEnd() {
+				gs.evaluateWinner()
+				close(gs.Done)
+				return
+			}
+
 		case <-timeout:
 			gs.evaluateWinner()
 			close(gs.Done)
 			return
+
 		case <-gs.Done:
 			return
 		}
@@ -127,13 +142,39 @@ func (gs *GameSession) enhancedLoop() {
 func (gs *GameSession) tick() {
 	mutex.Lock()
 	defer mutex.Unlock()
-	for i := range gs.Players {
-		p := gs.Players[i]
+
+	for i, p := range gs.Players {
 		if p.Mana < 10 {
-			p.Mana++ // mana regen
+			p.Mana++
+		}
+
+		// Each tower attacks one troop (if any)
+		for _, tower := range p.Towers {
+			opponent := gs.Players[1-i]
+			if len(opponent.ActiveTroops) == 0 {
+				continue
+			}
+			target := opponent.ActiveTroops[0]
+			// Apply level multiplier to attack
+
+			// Basic target selection: first troop
+			// Apply level multiplier to attack
+			baseATK := float64(tower.Damage) * gs.Players[i].Level.Multiplier
+
+			// Calculate critical hit
+			isCrit := rand.Float64() < 0.1 // 10% crit chance
+			if isCrit {
+				baseATK *= 1.2 // 20% more damage on crit
+			}
+
+			// Calculate final damage
+			dmg := max(int(baseATK)-target.Spec.Defence, 0)
+			target.Health -= dmg
+			if target.Health <= 0 {
+				opponent.ActiveTroops = opponent.ActiveTroops[1:]
+			}
 		}
 	}
-	// optionally process tower auto-attacks here
 	gs.broadcastState()
 }
 
@@ -141,15 +182,33 @@ func (gs *GameSession) tick() {
 func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 	mutex.Lock()
 	defer mutex.Unlock()
+	//Take the player
 	p := gs.Players[cmd.PlayerIndex]
 
 	spec, ok := gs.TroopSpecs[cmd.TroopName] // stats lookup
-	if !ok || p.Mana < spec.Mana {
+	// log.Println("Spec to deploy: ", spec)
+	if !ok || p.Mana < spec.Cost {
+		if !ok {
+			log.Println("Troop name: ", cmd.TroopName)
+			log.Println("gs.Troop name: ", gs.TroopSpecs)
+			log.Println("spec not find")
+		} else {
+			log.Println("Mana insufficient")
+		}
 		return // invalid or insufficient mana
 	}
-	p.Mana -= spec.Mana
+	p.Mana -= spec.Cost
+	log.Println("Current mana: ", p.Mana)
+
 	// apply troop action: attack or heal
-	if cmd.TroopName == "Queen" {
+	troop := &TroopInstance{
+		Spec:   spec,
+		Health: spec.Health,
+		// optionally Position, etc.
+	}
+	p.ActiveTroops = append(p.ActiveTroops, troop)
+
+	if cmd.TroopName == "queen" {
 		p.HealWeakestTower(300)
 	} else {
 		gs.attackOpponentTower(cmd.PlayerIndex, spec)
@@ -157,26 +216,27 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 }
 
 // attackOpponentTower resolves a troop attacking the next enemy tower
-func (gs *GameSession) attackOpponentTower(idx int, spec TroopSpec) {
+func (gs *GameSession) attackOpponentTower(idx int, spec specs.TroopSpec) {
 	target := gs.Players[1-idx].NextAliveTower()
+	log.Println(target)
 
 	// Apply level multiplier to attack
-	baseATK := float64(spec.ATK) * gs.Players[idx].Level.Multiplier
+	baseATK := float64(spec.Damage) * gs.Players[idx].Level.Multiplier
+	// log.Println("baseATK", baseATK)
 
 	// Calculate critical hit
 	isCrit := rand.Float64() < 0.1 // 10% crit chance
 	if isCrit {
+		// log.Println("critical baseATK", baseATK)
 		baseATK *= 1.2 // 20% more damage on crit
 	}
 
 	// Calculate final damage
-	dmg := int(baseATK) - target.DEF
-	if dmg < 0 {
-		dmg = 0
-	}
-
-	target.HP -= dmg
-	if target.HP <= 0 {
+	dmg := max(int(baseATK)-target.Defence, 0)
+	// log.Println("final", dmg)
+	target.Health -= dmg
+	// log.Println("target.Health", target.Health)
+	if target.Health <= 0 {
 		gs.Players[1-idx].DestroyTower(target)
 		gs.justDestroyedTower = true
 
@@ -188,7 +248,7 @@ func (gs *GameSession) attackOpponentTower(idx int, spec TroopSpec) {
 }
 
 // awardExp handles EXP gain and leveling
-func (gs *GameSession) awardExp(playerIdx int, tower *Tower) {
+func (gs *GameSession) awardExp(playerIdx int, tower *specs.TowerSpec) {
 	player := gs.Players[playerIdx]
 
 	// Award EXP based on tower type
@@ -196,8 +256,12 @@ func (gs *GameSession) awardExp(playerIdx int, tower *Tower) {
 	switch tower.Name {
 	case "King Tower":
 		expGain = 200
+	case "Princess Tower":
+		expGain = 150
 	case "Guard Tower":
 		expGain = 100
+	case "Cannon":
+		expGain = 50
 	}
 
 	// Add EXP and check for level up
@@ -228,28 +292,40 @@ func (gs *GameSession) checkLevelUp(player *Player) {
 // broadcastState would serialize and send STATE_UPDATE to clients
 func (gs *GameSession) broadcastState() {
 	state := GameState{
-		YourMana:       gs.Players[0].Mana,
-		OpponentMana:   gs.Players[1].Mana,
-		YourTowers:     make([]Tower, 0),
-		OpponentTowers: make([]Tower, 0),
+		YourMana:      gs.Players[0].Mana,
+		OpponentMana:  gs.Players[1].Mana,
+		Player1Towers: make([]specs.TowerSpec, 0),
+		Player2Towers: make([]specs.TowerSpec, 0),
 	}
 
 	// Add player 0's towers
 	for _, t := range gs.Players[0].Towers {
-		if t.HP > 0 {
-			state.YourTowers = append(state.YourTowers, Tower{
-				Name: t.Name,
-				HP:   t.HP,
+		if t.Health > 0 {
+			state.Player1Towers = append(state.Player1Towers, specs.TowerSpec{
+				Name:        t.Name,
+				Type:        t.Type,
+				Health:      t.Health,
+				Damage:      t.Damage,
+				Defence:     t.Defence,
+				Range:       t.Range,
+				AttackSpeed: t.AttackSpeed,
+				Target:      t.Target,
 			})
 		}
 	}
 
 	// Add player 1's towers
 	for _, t := range gs.Players[1].Towers {
-		if t.HP > 0 {
-			state.OpponentTowers = append(state.OpponentTowers, Tower{
-				Name: t.Name,
-				HP:   t.HP,
+		if t.Health > 0 {
+			state.Player2Towers = append(state.Player2Towers, specs.TowerSpec{
+				Name:        t.Name,
+				Type:        t.Type,
+				Health:      t.Health,
+				Damage:      t.Damage,
+				Defence:     t.Defence,
+				Range:       t.Range,
+				AttackSpeed: t.AttackSpeed,
+				Target:      t.Target,
 			})
 		}
 	}
@@ -290,12 +366,12 @@ func (gs *GameSession) evaluateWinner() {
 	towers0 := 0
 	towers1 := 0
 	for _, t := range gs.Players[0].Towers {
-		if t.HP > 0 {
+		if t.Health > 0 {
 			towers0++
 		}
 	}
 	for _, t := range gs.Players[1].Towers {
-		if t.HP > 0 {
+		if t.Health > 0 {
 			towers1++
 		}
 	}
@@ -337,10 +413,9 @@ func (gs *GameSession) evaluateWinner() {
 }
 
 // NewGameSession creates a new game session
-func NewGameSession(mode GameMode, players [2]*Player,
-	troopSpecs map[string]TroopSpec,
-	towerSpecs map[string]TowerSpec) *GameSession {
-
+func NewGameSession(players [2]*Player,
+	troopSpecs map[string]specs.TroopSpec,
+	towerSpecs map[string]specs.TowerSpec) *GameSession {
 	// Initialize player levels
 	for i := range players {
 		players[i].Level = Level{
@@ -352,7 +427,6 @@ func NewGameSession(mode GameMode, players [2]*Player,
 	}
 
 	return &GameSession{
-		Mode:         mode,
 		Players:      players,
 		TroopSpecs:   troopSpecs,
 		TowerSpecs:   towerSpecs,

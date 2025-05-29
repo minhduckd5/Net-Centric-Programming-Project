@@ -4,13 +4,13 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
-	"io"
+	"math/rand"
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"tcr/server"
@@ -23,12 +23,13 @@ const (
 )
 
 type GameClient struct {
-	serverAddr string
-	conn       net.Conn
-	reader     *bufio.Reader
-	username   string
-	password   string
-	inGame     bool
+	serverAddr      string
+	conn            net.Conn
+	reader          *bufio.Reader
+	username        string
+	password        string
+	inGame          bool
+	availableTroops []string
 }
 
 func NewGameClient(serverAddr string) *GameClient {
@@ -95,6 +96,10 @@ func (c *GameClient) handleGameStart(pdu server.PDU) {
 		return
 	}
 
+	// Randomly select 3 unique troops at game start
+	allTroops := []string{"pawn", "bishop", "rook", "knight", "prince", "queen", "archer", "giant", "minion"}
+	rand.Shuffle(len(allTroops), func(i, j int) { allTroops[i], allTroops[j] = allTroops[j], allTroops[i] })
+	c.availableTroops = allTroops[:3]
 	c.inGame = true
 	fmt.Printf("\n=== Game Started ===\n")
 	fmt.Printf("Mode: %s\n", startData.Mode)
@@ -114,26 +119,31 @@ func (c *GameClient) handleStateUpdate(pdu server.PDU) {
 
 	// Display game state
 	fmt.Println("\n=== Game State ===")
-	fmt.Printf("Your Mana: %d\n", state.YourMana)
-	fmt.Printf("Opponent Mana: %d\n", state.OpponentMana)
+	fmt.Printf("Player 1 Mana: %d\n", state.YourMana)
+	fmt.Printf("Player 2 Mana: %d\n", state.OpponentMana)
 
-	fmt.Println("\nYour Towers:")
-	for _, tower := range state.YourTowers {
-		fmt.Printf("- %s: HP %d\n", tower.Name, tower.HP)
+	fmt.Println("\nPlayer 1 Towers:")
+	for _, tower := range state.Player1Towers {
+		fmt.Printf("- %s: HP %d\n", tower.Name, tower.Health)
 	}
 
-	fmt.Println("\nOpponent Towers:")
-	for _, tower := range state.OpponentTowers {
-		fmt.Printf("- %s: HP %d\n", tower.Name, tower.HP)
+	fmt.Println("\nPlayer 2 Towers:")
+	for _, tower := range state.Player2Towers {
+		fmt.Printf("- %s: HP %d\n", tower.Name, tower.Health)
+	}
+
+	troopCosts := map[string]int{
+		"pawn": 3, "bishop": 4, "rook": 5,
+		"knight": 5, "prince": 6, "queen": 5,
+		"archer": 3, "giant": 7, "minion": 3,
 	}
 
 	fmt.Println("\nAvailable Troops:")
-	fmt.Println("1. Pawn (3 mana)")
-	fmt.Println("2. Bishop (4 mana)")
-	fmt.Println("3. Rook (5 mana)")
-	fmt.Println("4. Knight (5 mana)")
-	fmt.Println("5. Prince (6 mana)")
-	fmt.Println("6. Queen (5 mana)")
+	for i, troop := range c.availableTroops {
+		capitalized := strings.Title(troop)
+		fmt.Printf("%d. %s (%d mana)\n", i+1, capitalized, troopCosts[troop])
+	}
+
 	fmt.Println("\nEnter troop number or 'quit' to exit")
 }
 
@@ -177,63 +187,49 @@ func (c *GameClient) run() error {
 		os.Exit(0)
 	}()
 
-	// Main game loop
+	// Start goroutine to receive updates
+	go func() {
+		for {
+			pdu, err := server.ReceivePDU(c.conn)
+			if err != nil {
+				fmt.Printf("Receive error: %v\n", err)
+				continue
+			}
+
+			switch pdu.Type {
+			case "game_start":
+				c.handleGameStart(pdu)
+			case "state_update":
+				c.handleStateUpdate(pdu)
+			case "game_end":
+				c.handleGameEnd(pdu)
+				os.Exit(0) // Gracefully exit game
+			}
+		}
+	}()
+
+	// Input loop
 	for {
-		pdu, err := server.ReceivePDU(c.conn)
-		fmt.Print(pdu)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				// Now this will correctly catch wrapped EOFs
-				fmt.Println("Waiting for server message...")
-				time.Sleep(1 * time.Second)
-				continue
-			}
-			if c.inGame {
-				fmt.Printf("Connection lost. Attempting to reconnect...\n")
-				if err := c.connect(); err != nil {
-					return fmt.Errorf("reconnection failed: %v", err)
-				}
-				continue
-			}
-			return fmt.Errorf("receive error: %v", err)
-		}
-
-		switch pdu.Type {
-		case "game_start":
-			c.handleGameStart(pdu)
-		case "state_update":
-			c.handleStateUpdate(pdu)
-		case "game_end":
-			c.handleGameEnd(pdu)
-			return nil
-		}
-
 		if c.inGame {
-			fmt.Print("\nEnter troop number (1-6) or 'quit': ")
+			fmt.Print("\nEnter troop number (1–3) or 'quit': ")
 			input := strings.TrimSpace(readLine(c.reader))
 
 			if input == "quit" {
 				return nil
 			}
 
-			// Map input to troop names
-			troopMap := map[string]string{
-				"1": "Pawn",
-				"2": "Bishop",
-				"3": "Rook",
-				"4": "Knight",
-				"5": "Prince",
-				"6": "Queen",
-			}
-
-			if troop, ok := troopMap[input]; ok {
-				deployCmd := fmt.Sprintf(`{"troop":"%s"}`, troop)
-				if err := server.SendPDU(c.conn, server.PDU{Type: "deploy", Data: json.RawMessage(deployCmd)}); err != nil {
+			if idx, err := strconv.Atoi(input); err == nil && idx >= 1 && idx <= 3 {
+				troop := c.availableTroops[idx-1]
+				deployCmd := fmt.Sprintf(`{"Troop": "%s"}`, troop)
+				if err := server.SendPDU(c.conn, server.PDU{
+					Type: "deploy", Data: json.RawMessage(deployCmd)}); err != nil {
 					fmt.Printf("Error sending deploy command: %v\n", err)
 				}
 			} else {
 				fmt.Println("Invalid troop number!")
 			}
+		} else {
+			time.Sleep(500 * time.Millisecond) // Avoid busy-waiting
 		}
 	}
 }

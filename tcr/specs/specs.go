@@ -12,6 +12,7 @@ type TroopSpec struct {
 	Type        string  `json:"type"`
 	Health      int     `json:"health"`
 	Damage      int     `json:"damage"`
+	Defence     int     `json:"defence"`
 	Range       float64 `json:"range"`
 	Speed       float64 `json:"speed"`
 	AttackSpeed float64 `json:"attack_speed"`
@@ -25,6 +26,7 @@ type TowerSpec struct {
 	Type        string  `json:"type"` // "king", "princess", "cannon"
 	Health      int     `json:"health"`
 	Damage      int     `json:"damage"`
+	Defence     int     `json:"defence"`
 	Range       float64 `json:"range"`
 	AttackSpeed float64 `json:"attack_speed"`
 	Target      string  `json:"target"` // "ground", "air", "both"
@@ -73,6 +75,9 @@ func validateSpecs(specs *Specs) error {
 		if troop.Damage < 0 {
 			return fmt.Errorf("invalid damage for troop %s: %d", name, troop.Damage)
 		}
+		if troop.Defence < 0 {
+			return fmt.Errorf("invalid defence for troop %s: %d", name, troop.Defence)
+		}
 		if troop.Range <= 0 {
 			return fmt.Errorf("invalid range for troop %s: %f", name, troop.Range)
 		}
@@ -104,6 +109,9 @@ func validateSpecs(specs *Specs) error {
 		}
 		if tower.Damage < 0 {
 			return fmt.Errorf("invalid damage for tower %s: %d", name, tower.Damage)
+		}
+		if tower.Defence < 0 {
+			return fmt.Errorf("invalid damage for tower %s: %d", name, tower.Defence)
 		}
 		if tower.Range <= 0 {
 			return fmt.Errorf("invalid range for tower %s: %f", name, tower.Range)

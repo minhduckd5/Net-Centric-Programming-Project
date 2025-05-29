@@ -2,6 +2,7 @@ package main
 
 import (
 	"tcr/server"
+	"tcr/specs"
 )
 
 func main() {
@@ -10,13 +11,16 @@ func main() {
 	if err != nil {
 		panic("failed to load users: " + err.Error())
 	}
+	// log.Println(users)
 	// Load specs
-	troops := make(map[string]server.TroopSpec)
-	towers := make(map[string]server.TowerSpec)
-	if err := server.LoadSpecs("specs.json", troops, towers); err != nil {
+	loadedSpecs, err := specs.LoadSpecs("../../specs/game_specs.json")
+	if err != nil {
 		panic("failed to load specs: " + err.Error())
 	}
 
+	troops := loadedSpecs.Troops
+	towers := loadedSpecs.Towers
+	// log.Println("troops: ", troops, "towers: ", towers)
 	matchQueue := make(chan *server.ClientHandler, 10) // adjust size as needed
 
 	// Start the server

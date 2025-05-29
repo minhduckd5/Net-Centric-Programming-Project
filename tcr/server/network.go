@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"tcr/specs"
 )
 
 // ClientHandler holds connection and user reference
@@ -28,7 +29,7 @@ func SendPDU(conn net.Conn, pdu PDU) error {
 	// Send length prefix
 	lenBuf := make([]byte, 4)
 	binary.BigEndian.PutUint32(lenBuf, uint32(len(data)))
-	log.Println("Send length:", lenBuf)
+	// log.Println("Send length:", lenBuf)
 	if _, err := conn.Write(lenBuf); err != nil {
 		log.Printf("write length error: %v", err)
 		return fmt.Errorf("write length error: %w", err)
@@ -38,7 +39,7 @@ func SendPDU(conn net.Conn, pdu PDU) error {
 	if _, err := conn.Write(data); err != nil {
 		return fmt.Errorf("write data error: %w", err)
 	}
-	log.Println("Send data:", data)
+	// log.Println("Send data:", data)
 	return nil
 }
 
@@ -67,17 +68,15 @@ func ReceivePDU(conn net.Conn) (PDU, error) {
 }
 
 // HandleConnection manages a single client connection
-func HandleConnection(conn net.Conn, users map[string]User, matchQueue chan *ClientHandler, id int) error {
+func HandleConnection(conn net.Conn, users map[string]User, matchQueue chan *ClientHandler, id int) {
 
 	pdu, err := ReceivePDU(conn)
 	if err != nil {
-		return fmt.Errorf("error: %v", err)
 	}
 
 	var creds struct{ Username, Password string }
 	if err := json.Unmarshal(pdu.Data, &creds); err != nil {
 		log.Println("unmarshal credentials:", err)
-		return fmt.Errorf("error: %v", err)
 	}
 	log.Printf("Received login credentials: %s / %s", creds.Username, creds.Password)
 
@@ -88,26 +87,22 @@ func HandleConnection(conn net.Conn, users map[string]User, matchQueue chan *Cli
 	if !ok || stored.PasswordHash != creds.Password {
 		enc.Encode(PDU{Type: "login_resp", Data: []byte(`{"status":"ERR"}`)})
 		writer.Flush()
-		return fmt.Errorf("invalid login for user: %s", creds.Username)
 	}
 
 	// Send login success
 	resp := PDU{Type: "login_resp", Data: []byte(`{"status":"OK"}`)}
 	if err := SendPDU(conn, resp); err != nil {
 		log.Println("send login_resp:", err)
-		return err
 	}
 
 	// Enqueue for matchmaking
 	handler := &ClientHandler{Conn: conn, User: &stored, HandlerID: id}
 	matchQueue <- handler
-
-	return nil
 }
 
 // StartServer begins listening and handles matchmaking
 func StartServer(addr string, users map[string]User,
-	troopSpecs map[string]TroopSpec, towerSpecs map[string]TowerSpec,
+	troopSpecs map[string]specs.TroopSpec, towerSpecs map[string]specs.TowerSpec,
 	matchQueue chan *ClientHandler) error {
 
 	ln, err := net.Listen("tcp", addr)
@@ -144,30 +139,63 @@ func StartServer(addr string, users map[string]User,
 
 // StartGameSession initializes GameSession and triggers startGame
 func StartGameSession(c1, c2 *ClientHandler,
-	troopSpecs map[string]TroopSpec, towerSpecs map[string]TowerSpec) error {
+	troopSpecs map[string]specs.TroopSpec, towerSpecs map[string]specs.TowerSpec) {
 	log.Println("accept:", c1, c2)
 	// Send game_start PDU
-	startData := fmt.Sprintf(`{"mode":"simple","players":[%d,%d]}`, c1.HandlerID, c2.HandlerID)
-	fmt.Println("startData: ", startData)
+	startData := fmt.Sprintf(`{"players":[%d,%d]}`, c1.HandlerID, c2.HandlerID)
+	// fmt.Println("startData: ", startData)
 	if err := SendPDU(c1.Conn, PDU{
 		Type: "game_start",
 		Data: []byte(startData)}); err != nil {
-		return fmt.Errorf("login send error: %w", err)
 	}
 
 	if err := SendPDU(c2.Conn, PDU{
 		Type: "game_start",
 		Data: []byte(startData)}); err != nil {
-		return fmt.Errorf("login send error: %w", err)
 	}
-	fmt.Printf("Send success")
+	// fmt.Println("Send success")
 
 	// Initialize session
 	players := [2]*Player{
-		{Conn: c1.Conn, Username: c1.User.Username},
-		{Conn: c2.Conn, Username: c2.User.Username},
+		{
+			Conn:     c1.Conn,
+			Username: c1.User.Username,
+			Mana:     10,
+			Towers: []*specs.TowerSpec{
+				cloneTowerSpec(towerSpecs["guard_tower"]),
+				cloneTowerSpec(towerSpecs["guard_tower"]),
+				cloneTowerSpec(towerSpecs["king_tower"]),
+			},
+			Level: Level{
+				Level:      c1.User.Level,
+				Exp:        c1.User.Exp,
+				NextLevel:  c1.User.NextLevel,
+				Multiplier: c1.User.Multiplier,
+			},
+		},
+		{
+			Conn:     c2.Conn,
+			Username: c2.User.Username,
+			Mana:     10,
+			Towers: []*specs.TowerSpec{
+				cloneTowerSpec(towerSpecs["guard_tower"]),
+				cloneTowerSpec(towerSpecs["guard_tower"]),
+				cloneTowerSpec(towerSpecs["king_tower"]),
+			},
+			Level: Level{
+				Level:      c2.User.Level,
+				Exp:        c2.User.Exp,
+				NextLevel:  c2.User.NextLevel,
+				Multiplier: c2.User.Multiplier,
+			},
+		},
 	}
-	gs := NewGameSession(SimpleMode, players, troopSpecs, towerSpecs)
+	gs := NewGameSession(players, troopSpecs, towerSpecs)
 	gs.StartGame()
-	return nil
+
+}
+
+func cloneTowerSpec(spec specs.TowerSpec) *specs.TowerSpec {
+	clone := spec // copy struct value
+	return &clone
 }
