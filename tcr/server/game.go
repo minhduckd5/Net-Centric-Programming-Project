@@ -163,7 +163,13 @@ func (gs *GameSession) tick() {
 			baseATK := float64(tower.Damage) * gs.Players[i].Level.Multiplier
 
 			// Calculate critical hit
-			isCrit := rand.Float64() < 0.1 // 10% crit chance
+			var isCrit bool
+			if tower.Type == "king" {
+				isCrit = rand.Float64() < 0.1 // 10% crit chance
+			}
+			if tower.Type == "guard" {
+				isCrit = rand.Float64() < 0.05 // 5% crit chance
+			}
 			if isCrit {
 				baseATK *= 1.2 // 20% more damage on crit
 			}
@@ -172,7 +178,28 @@ func (gs *GameSession) tick() {
 			dmg := max(int(baseATK)-target.Spec.Defence, 0)
 			target.Health -= dmg
 			if target.Health <= 0 {
+				if target.Spec.Name == "Pawn" {
+					p.Level.Exp += 5
+				} else if target.Spec.Name == "Bishop" {
+					p.Level.Exp += 10
+				} else if target.Spec.Name == "Rook" {
+					p.Level.Exp += 25
+				} else if target.Spec.Name == "Knight" {
+					p.Level.Exp += 25
+				} else if target.Spec.Name == "Prince" {
+					p.Level.Exp += 50
+				} else if target.Spec.Name == "Queen" {
+					p.Level.Exp += 30
+				} else if target.Spec.Name == "Archer" {
+					p.Level.Exp += 10
+				} else if target.Spec.Name == "Giant" {
+					p.Level.Exp += 40
+				} else if target.Spec.Name == "Minion" {
+					p.Level.Exp += 10
+				}
+				gs.checkLevelUp(p, gs.Users, userFilePath)
 				opponent.ActiveTroops = opponent.ActiveTroops[1:]
+				log.Println("exp: ", p.Level.Exp)
 				log.Println("Troop die, active list: ", opponent.ActiveTroops)
 			}
 		}
@@ -213,8 +240,6 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 	if cmd.TroopName == "queen" {
 		go func(troop *TroopInstance, playerIdx int) {
 			for {
-				time.Sleep(2 * time.Second)
-
 				mutex.Lock()
 				if troop.Health <= 0 {
 					mutex.Unlock()
@@ -223,14 +248,13 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 				}
 				p.HealWeakestTower(int(400 * p.Level.Multiplier))
 				mutex.Unlock()
+				time.Sleep(2 * time.Second)
 			}
 		}(troop, cmd.PlayerIndex)
 	}
-	if cmd.TroopName != "queen" { // Queen already handled as instant support
+	if cmd.TroopName != "queen" {
 		go func(troop *TroopInstance, playerIdx int) {
 			for {
-				time.Sleep(2 * time.Second)
-
 				mutex.Lock()
 				if troop.Health <= 0 {
 					mutex.Unlock()
@@ -239,6 +263,7 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 				}
 				gs.attackOpponentTowerFromTroop(playerIdx, troop)
 				mutex.Unlock()
+				time.Sleep(2 * time.Second)
 			}
 		}(troop, cmd.PlayerIndex)
 	}
@@ -279,13 +304,9 @@ func (gs *GameSession) awardExp(playerIdx int, tower *specs.TowerSpec) {
 	expGain := 0
 	switch tower.Name {
 	case "King Tower":
-		expGain = 100
-	case "Princess Tower":
-		expGain = 80
+		expGain = 200
 	case "Guard Tower":
-		expGain = 50
-	case "Cannon":
-		expGain = 30
+		expGain = 100
 	}
 
 	// Add EXP and check for level up
@@ -351,14 +372,11 @@ func (gs *GameSession) broadcastState() {
 	for _, t := range gs.Players[0].Towers {
 		if t.Health > 0 {
 			state.Player1Towers = append(state.Player1Towers, specs.TowerSpec{
-				Name:        t.Name,
-				Type:        t.Type,
-				Health:      t.Health,
-				Damage:      t.Damage,
-				Defence:     t.Defence,
-				Range:       t.Range,
-				AttackSpeed: t.AttackSpeed,
-				Target:      t.Target,
+				Name:    t.Name,
+				Type:    t.Type,
+				Health:  t.Health,
+				Damage:  t.Damage,
+				Defence: t.Defence,
 			})
 		}
 	}
@@ -367,14 +385,11 @@ func (gs *GameSession) broadcastState() {
 	for _, t := range gs.Players[1].Towers {
 		if t.Health > 0 {
 			state.Player2Towers = append(state.Player2Towers, specs.TowerSpec{
-				Name:        t.Name,
-				Type:        t.Type,
-				Health:      t.Health,
-				Damage:      t.Damage,
-				Defence:     t.Defence,
-				Range:       t.Range,
-				AttackSpeed: t.AttackSpeed,
-				Target:      t.Target,
+				Name:    t.Name,
+				Type:    t.Type,
+				Health:  t.Health,
+				Damage:  t.Damage,
+				Defence: t.Defence,
 			})
 		}
 	}

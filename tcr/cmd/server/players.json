@@ -18,9 +18,9 @@
   "thien": {
     "username": "thien",
     "password_hash": "123456",
-    "level": 3,
-    "exp": 50,
-    "next_level": 242,
-    "multiplier": 1.2
+    "level": 4,
+    "exp": 113,
+    "next_level": 266,
+    "multiplier": 1.2999999999999998
   }
 }

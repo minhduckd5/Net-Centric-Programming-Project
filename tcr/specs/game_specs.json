@@ -2,153 +2,82 @@
     "troops": {
         "pawn": {
             "name": "Pawn",
-            "type": "ground",
-            "health": 2000,
-            "damage": 100,
-            "defence": 10,
-            "range": 1.0,
-            "speed": 1.0,
-            "attack_speed": 1.0,
-            "cost": 3,
-            "target": "ground"
+            "health": 50,
+            "damage": 150,
+            "defence": 100,
+            "cost": 3
         },
         "bishop": {
             "name": "Bishop",
-            "type": "ground",
-            "health": 2500,
-            "damage": 150,
-            "defence": 15,
-            "range": 1.0,
-            "speed": 1.0,
-            "attack_speed": 1.0,
-            "cost": 4,
-            "target": "ground"
+            "health": 100,
+            "damage": 200,
+            "defence": 150,
+            "cost": 4
         },
         "rook": {
             "name": "Rook",
-            "type": "ground",
-            "health": 3000,
-            "damage": 220,
-            "defence": 20,
-            "range": 1.0,
-            "speed": 1.0,
-            "attack_speed": 1.0,
-            "cost": 5,
-            "target": "ground"
+            "health": 250,
+            "damage": 200,
+            "defence": 200,
+            "cost": 5
         },
         "knight": {
             "name": "Knight",
-            "type": "ground",
-            "health": 3500,
+            "health": 200,
             "damage": 300,
-            "defence": 25,
-            "range": 1.0,
-            "speed": 1.0,
-            "attack_speed": 1.0,
-            "cost": 5,
-            "target": "ground"
+            "defence": 150,
+            "cost": 5
         },
         "prince": {
             "name": "Prince",
-            "type": "ground",
-            "health": 3500,
+            "health": 500,
             "damage": 400,
-            "defence": 35,
-            "range": 1.0,
-            "speed": 1.0,
-            "attack_speed": 1.0,
-            "cost": 6,
-            "target": "ground"
+            "defence": 300,
+            "cost": 6
         },
         "queen": {
             "name": "Queen",
-            "type": "ground",
-            "health": 1000,
+            "health": 0,
             "damage": 0,
-            "defence": 10,
-            "range": 1.0,
-            "speed": 1.0,
-            "attack_speed": 1.0,
-            "cost": 5,
-            "target": "ground"
+            "defence": 0,
+            "cost": 5
         },
         "archer": {
             "name": "Archer",
-            "type": "ground",
-            "health": 1200,
-            "damage": 110,
-            "defence": 5,
-            "range": 5.0,
-            "speed": 0.8,
-            "attack_speed": 1.2,
-            "cost": 3,
-            "target": "both"
+            "health": 120,
+            "damage": 200,
+            "defence": 50,
+            "cost": 3
         },
         "giant": {
             "name": "Giant",
-            "type": "ground",
-            "health": 3800,
-            "damage": 100,
-            "defence": 40,
-            "range": 1.0,
-            "speed": 0.6,
-            "attack_speed": 1.5,
-            "cost": 7,
-            "target": "ground"
+            "health": 1000,
+            "damage": 150,
+            "defence": 350,
+            "cost": 7
         },
         "minion": {
             "name": "Minion",
-            "type": "air",
-            "health": 1000,
-            "damage": 80,
-            "defence": 10,
-            "range": 1.0,
-            "speed": 1.2,
-            "attack_speed": 1.0,
-            "cost": 3,
-            "target": "both"
+            "health": 150,
+            "damage": 300,
+            "defence": 40,
+            "cost": 3
         }
     },
     "towers": {
         "king_tower": {
             "name": "King Tower",
             "type": "king",
-            "health": 6000,
-            "damage": 220,
-            "defence": 55,
-            "range": 7.0,
-            "attack_speed": 1.0,
-            "target": "both"
-        },
-        "princess_tower": {
-            "name": "Princess Tower",
-            "type": "princess",
             "health": 2000,
-            "damage": 100,
-            "defence": 30,
-            "range": 7.0,
-            "attack_speed": 1.0,
-            "target": "both"
-        },
-        "cannon": {
-            "name": "Cannon",
-            "type": "cannon",
-            "health": 1000,
-            "damage": 80,
-            "defence": 25,
-            "range": 5.0,
-            "attack_speed": 1.0,
-            "target": "ground"
+            "damage": 500,
+            "defence": 300
         },
         "guard_tower": {
             "name": "Guard Tower",
             "type": "guard",
-            "health": 2500,
-            "damage": 120,
-            "defence": 50,
-            "range": 5.0,
-            "attack_speed": 1.0,
-            "target": "ground"
+            "health": 1000,
+            "damage": 300,
+            "defence": 100
         }
     }
 }
