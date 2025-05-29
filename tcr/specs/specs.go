@@ -8,28 +8,20 @@ import (
 
 // TroopSpec represents the specification for a troop
 type TroopSpec struct {
-	Name        string  `json:"name"`
-	Type        string  `json:"type"`
-	Health      int     `json:"health"`
-	Damage      int     `json:"damage"`
-	Defence     int     `json:"defence"`
-	Range       float64 `json:"range"`
-	Speed       float64 `json:"speed"`
-	AttackSpeed float64 `json:"attack_speed"`
-	Cost        int     `json:"cost"`
-	Target      string  `json:"target"` // "ground", "air", "both"
+	Name    string `json:"name"`
+	Health  int    `json:"health"`
+	Damage  int    `json:"damage"`
+	Defence int    `json:"defence"`
+	Cost    int    `json:"cost"`
 }
 
 // TowerSpec represents the specification for a tower
 type TowerSpec struct {
-	Name        string  `json:"name"`
-	Type        string  `json:"type"` // "king", "princess", "cannon"
-	Health      int     `json:"health"`
-	Damage      int     `json:"damage"`
-	Defence     int     `json:"defence"`
-	Range       float64 `json:"range"`
-	AttackSpeed float64 `json:"attack_speed"`
-	Target      string  `json:"target"` // "ground", "air", "both"
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Health  int    `json:"health"`
+	Damage  int    `json:"damage"`
+	Defence int    `json:"defence"`
 }
 
 // Specs holds all game specifications
@@ -69,7 +61,7 @@ func validateSpecs(specs *Specs) error {
 		if name == "" {
 			return fmt.Errorf("troop name cannot be empty")
 		}
-		if troop.Health <= 0 {
+		if troop.Health < 0 {
 			return fmt.Errorf("invalid health for troop %s: %d", name, troop.Health)
 		}
 		if troop.Damage < 0 {
@@ -78,20 +70,8 @@ func validateSpecs(specs *Specs) error {
 		if troop.Defence < 0 {
 			return fmt.Errorf("invalid defence for troop %s: %d", name, troop.Defence)
 		}
-		if troop.Range <= 0 {
-			return fmt.Errorf("invalid range for troop %s: %f", name, troop.Range)
-		}
-		if troop.Speed <= 0 {
-			return fmt.Errorf("invalid speed for troop %s: %f", name, troop.Speed)
-		}
-		if troop.AttackSpeed <= 0 {
-			return fmt.Errorf("invalid attack speed for troop %s: %f", name, troop.AttackSpeed)
-		}
-		if troop.Cost <= 0 {
+		if troop.Cost < 0 {
 			return fmt.Errorf("invalid cost for troop %s: %d", name, troop.Cost)
-		}
-		if troop.Target != "ground" && troop.Target != "air" && troop.Target != "both" {
-			return fmt.Errorf("invalid target type for troop %s: %s", name, troop.Target)
 		}
 	}
 
@@ -113,16 +93,7 @@ func validateSpecs(specs *Specs) error {
 		if tower.Defence < 0 {
 			return fmt.Errorf("invalid damage for tower %s: %d", name, tower.Defence)
 		}
-		if tower.Range <= 0 {
-			return fmt.Errorf("invalid range for tower %s: %f", name, tower.Range)
-		}
-		if tower.AttackSpeed <= 0 {
-			return fmt.Errorf("invalid attack speed for tower %s: %f", name, tower.AttackSpeed)
-		}
-		if tower.Target != "ground" && tower.Target != "air" && tower.Target != "both" {
-			return fmt.Errorf("invalid target type for tower %s: %s", name, tower.Target)
-		}
-		if tower.Type != "king" && tower.Type != "princess" && tower.Type != "cannon" && tower.Type != "guard" {
+		if tower.Type != "king" && tower.Type != "guard" {
 			return fmt.Errorf("invalid tower type for %s: %s", name, tower.Type)
 		}
 	}

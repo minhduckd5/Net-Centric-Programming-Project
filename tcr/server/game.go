@@ -105,7 +105,8 @@ func (gs *GameSession) enhancedLoop() {
 	ticker := time.NewTicker(gs.TickInterval)
 	timeout := time.After(3 * time.Minute) // 3-minute match timer
 	defer ticker.Stop()
-
+	defer gs.Players[0].Conn.Close()
+	defer gs.Players[1].Conn.Close()
 	for {
 		select {
 		case <-ticker.C:
@@ -163,7 +164,13 @@ func (gs *GameSession) tick() {
 			baseATK := float64(tower.Damage) * gs.Players[i].Level.Multiplier
 
 			// Calculate critical hit
-			isCrit := rand.Float64() < 0.1 // 10% crit chance
+			var isCrit bool
+			if tower.Type == "king" {
+				isCrit = rand.Float64() < 0.1 // 10% crit chance
+			}
+			if tower.Type == "guard" {
+				isCrit = rand.Float64() < 0.05 // 5% crit chance
+			}
 			if isCrit {
 				baseATK *= 1.2 // 20% more damage on crit
 			}
@@ -172,7 +179,28 @@ func (gs *GameSession) tick() {
 			dmg := max(int(baseATK)-target.Spec.Defence, 0)
 			target.Health -= dmg
 			if target.Health <= 0 {
+				if target.Spec.Name == "Pawn" {
+					p.Level.Exp += 5
+				} else if target.Spec.Name == "Bishop" {
+					p.Level.Exp += 10
+				} else if target.Spec.Name == "Rook" {
+					p.Level.Exp += 25
+				} else if target.Spec.Name == "Knight" {
+					p.Level.Exp += 25
+				} else if target.Spec.Name == "Prince" {
+					p.Level.Exp += 50
+				} else if target.Spec.Name == "Queen" {
+					p.Level.Exp += 30
+				} else if target.Spec.Name == "Archer" {
+					p.Level.Exp += 10
+				} else if target.Spec.Name == "Giant" {
+					p.Level.Exp += 40
+				} else if target.Spec.Name == "Minion" {
+					p.Level.Exp += 10
+				}
+				gs.checkLevelUp(p, gs.Users, userFilePath)
 				opponent.ActiveTroops = opponent.ActiveTroops[1:]
+				log.Println("exp: ", p.Level.Exp)
 				log.Println("Troop die, active list: ", opponent.ActiveTroops)
 			}
 		}
@@ -213,24 +241,21 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 	if cmd.TroopName == "queen" {
 		go func(troop *TroopInstance, playerIdx int) {
 			for {
-				time.Sleep(2 * time.Second)
-
 				mutex.Lock()
-				if troop.Health <= 0 {
+				if troop.Health < 0 {
 					mutex.Unlock()
 					log.Printf("Troop %s is dead, stopping attack loop\n", troop.Spec.Name)
 					break
 				}
-				p.HealWeakestTower(int(400 * p.Level.Multiplier))
+				p.HealWeakestTower(int(300 * p.Level.Multiplier))
 				mutex.Unlock()
+				time.Sleep(2 * time.Second)
 			}
 		}(troop, cmd.PlayerIndex)
 	}
-	if cmd.TroopName != "queen" { // Queen already handled as instant support
+	if cmd.TroopName != "queen" {
 		go func(troop *TroopInstance, playerIdx int) {
 			for {
-				time.Sleep(2 * time.Second)
-
 				mutex.Lock()
 				if troop.Health <= 0 {
 					mutex.Unlock()
@@ -239,6 +264,7 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 				}
 				gs.attackOpponentTowerFromTroop(playerIdx, troop)
 				mutex.Unlock()
+				time.Sleep(2 * time.Second)
 			}
 		}(troop, cmd.PlayerIndex)
 	}
@@ -279,13 +305,9 @@ func (gs *GameSession) awardExp(playerIdx int, tower *specs.TowerSpec) {
 	expGain := 0
 	switch tower.Name {
 	case "King Tower":
-		expGain = 100
-	case "Princess Tower":
-		expGain = 80
+		expGain = 200
 	case "Guard Tower":
-		expGain = 50
-	case "Cannon":
-		expGain = 30
+		expGain = 100
 	}
 
 	// Add EXP and check for level up
@@ -351,14 +373,11 @@ func (gs *GameSession) broadcastState() {
 	for _, t := range gs.Players[0].Towers {
 		if t.Health > 0 {
 			state.Player1Towers = append(state.Player1Towers, specs.TowerSpec{
-				Name:        t.Name,
-				Type:        t.Type,
-				Health:      t.Health,
-				Damage:      t.Damage,
-				Defence:     t.Defence,
-				Range:       t.Range,
-				AttackSpeed: t.AttackSpeed,
-				Target:      t.Target,
+				Name:    t.Name,
+				Type:    t.Type,
+				Health:  t.Health,
+				Damage:  t.Damage,
+				Defence: t.Defence,
 			})
 		}
 	}
@@ -367,14 +386,11 @@ func (gs *GameSession) broadcastState() {
 	for _, t := range gs.Players[1].Towers {
 		if t.Health > 0 {
 			state.Player2Towers = append(state.Player2Towers, specs.TowerSpec{
-				Name:        t.Name,
-				Type:        t.Type,
-				Health:      t.Health,
-				Damage:      t.Damage,
-				Defence:     t.Defence,
-				Range:       t.Range,
-				AttackSpeed: t.AttackSpeed,
-				Target:      t.Target,
+				Name:    t.Name,
+				Type:    t.Type,
+				Health:  t.Health,
+				Damage:  t.Damage,
+				Defence: t.Defence,
 			})
 		}
 	}
@@ -388,10 +404,16 @@ func (gs *GameSession) broadcastState() {
 	// Send to both players
 	for _, p := range gs.Players {
 		if p.Conn != nil {
-			SendPDU(p.Conn, PDU{
+			err := SendPDU(p.Conn, PDU{
 				Type: "state_update",
 				Data: data,
 			})
+			if err != nil {
+				log.Printf("Player %s disconnected: %v\n", p.Username, err)
+				gs.evaluateWinner()
+				close(gs.Done)
+				return
+			}
 		}
 	}
 }
@@ -436,7 +458,7 @@ func (gs *GameSession) evaluateWinner() {
 	} else {
 		// Draw - both get small EXP
 		for _, p := range gs.Players {
-			p.Level.Exp += 50
+			p.Level.Exp += 10
 			gs.checkLevelUp(p, gs.Users, userFilePath)
 			user := gs.Users[p.Username] // Get a copy of the struct
 			user.isLogin = false         // Modify the field
@@ -444,7 +466,7 @@ func (gs *GameSession) evaluateWinner() {
 			if p.Conn != nil {
 				SendPDU(p.Conn, PDU{
 					Type: "game_end",
-					Data: json.RawMessage(`{"result":"draw","exp":50}`),
+					Data: json.RawMessage(`{"result":"draw","exp":10}`),
 				})
 			}
 		}
@@ -453,26 +475,26 @@ func (gs *GameSession) evaluateWinner() {
 
 	// Winner gets more EXP
 	if winner.Conn != nil {
-		winner.Level.Exp += 70
+		winner.Level.Exp += 30
 		user := gs.Users[winner.Username] // Get a copy of the struct
 		user.isLogin = false              // Modify the field
 		gs.Users[winner.Username] = user  // Store it back in the map
 		gs.checkLevelUp(winner, gs.Users, userFilePath)
 		SendPDU(winner.Conn, PDU{
 			Type: "game_end",
-			Data: json.RawMessage(`{"result":"win","exp":70}`),
+			Data: json.RawMessage(`{"result":"win","exp":30}`),
 		})
 
 	}
 	if loser.Conn != nil {
-		loser.Level.Exp += 30
+		loser.Level.Exp += 5
 		user := gs.Users[loser.Username] // Get a copy of the struct
 		user.isLogin = false             // Modify the field
 		gs.Users[loser.Username] = user  // Store it back in the map
 		gs.checkLevelUp(loser, gs.Users, userFilePath)
 		SendPDU(loser.Conn, PDU{
 			Type: "game_end",
-			Data: json.RawMessage(`{"result":"loss","exp":30}`),
+			Data: json.RawMessage(`{"result":"loss","exp":5}`),
 		})
 	}
 }
