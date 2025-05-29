@@ -2,38 +2,38 @@
     "troops": {
         "pawn": {
             "name": "Pawn",
-            "health": 50,
+            "health": 500,
             "damage": 150,
             "defence": 100,
             "cost": 3
         },
         "bishop": {
             "name": "Bishop",
-            "health": 100,
+            "health": 1000,
             "damage": 200,
             "defence": 150,
             "cost": 4
         },
         "rook": {
             "name": "Rook",
-            "health": 250,
+            "health": 2500,
             "damage": 200,
             "defence": 200,
             "cost": 5
         },
         "knight": {
             "name": "Knight",
-            "health": 200,
+            "health": 2000,
             "damage": 300,
             "defence": 150,
             "cost": 5
         },
         "prince": {
             "name": "Prince",
-            "health": 500,
-            "damage": 400,
+            "health": 5000,
+            "damage": 350,
             "defence": 300,
-            "cost": 6
+            "cost": 7
         },
         "queen": {
             "name": "Queen",
@@ -44,21 +44,21 @@
         },
         "archer": {
             "name": "Archer",
-            "health": 120,
+            "health": 1200,
             "damage": 200,
             "defence": 50,
             "cost": 3
         },
         "giant": {
             "name": "Giant",
-            "health": 1000,
+            "health": 5000,
             "damage": 150,
             "defence": 350,
             "cost": 7
         },
         "minion": {
             "name": "Minion",
-            "health": 150,
+            "health": 500,
             "damage": 300,
             "defence": 40,
             "cost": 3
@@ -68,15 +68,15 @@
         "king_tower": {
             "name": "King Tower",
             "type": "king",
-            "health": 2000,
+            "health": 6000,
             "damage": 500,
-            "defence": 300
+            "defence": 200
         },
         "guard_tower": {
             "name": "Guard Tower",
             "type": "guard",
-            "health": 1000,
-            "damage": 300,
+            "health": 3000,
+            "damage": 350,
             "defence": 100
         }
     }
