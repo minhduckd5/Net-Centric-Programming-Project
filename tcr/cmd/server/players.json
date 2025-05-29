@@ -3,16 +3,24 @@
     "username": "player1",
     "password_hash": "123456777",
     "level": 1,
-    "exp": 0,
-    "next_level": 2,
-    "multiplier": 2
+    "exp": 30,
+    "next_level": 200,
+    "multiplier": 1
   },
   "player2": {
     "username": "player2",
     "password_hash": "123456888",
     "level": 1,
     "exp": 0,
-    "next_level": 2,
-    "multiplier": 2
+    "next_level": 200,
+    "multiplier": 1
+  },
+  "thien": {
+    "username": "thien",
+    "password_hash": "123456",
+    "level": 3,
+    "exp": 50,
+    "next_level": 242,
+    "multiplier": 1.2
   }
 }

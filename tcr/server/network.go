@@ -14,6 +14,7 @@ import (
 
 // ClientHandler holds connection and user reference
 type ClientHandler struct {
+	Users     map[string]User
 	Conn      net.Conn
 	User      *User
 	HandlerID int
@@ -112,8 +113,8 @@ func HandleConnection(conn net.Conn, users map[string]User, matchQueue chan *Cli
 				PasswordHash: creds.Password,
 				Level:        1,
 				Exp:          0,
-				NextLevel:    2,
-				Multiplier:   2,
+				NextLevel:    200,
+				Multiplier:   1.0,
 			}
 
 			users[creds.Username] = newUser
@@ -153,7 +154,7 @@ func HandleConnection(conn net.Conn, users map[string]User, matchQueue chan *Cli
 			log.Printf("User logged in: %s\n", creds.Username)
 
 			// ✅ Success: enqueue and exit loop
-			handler := &ClientHandler{Conn: conn, User: &stored, HandlerID: id}
+			handler := &ClientHandler{Users: users, Conn: conn, User: &stored, HandlerID: id}
 			matchQueue <- handler
 			return
 
@@ -257,7 +258,7 @@ func StartGameSession(c1, c2 *ClientHandler,
 			},
 		},
 	}
-	gs := NewGameSession(players, troopSpecs, towerSpecs)
+	gs := NewGameSession(c1.Users, players, troopSpecs, towerSpecs)
 	gs.StartGame()
 
 }

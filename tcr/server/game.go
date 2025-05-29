@@ -35,6 +35,7 @@ type Level struct {
 // }
 
 type GameSession struct {
+	Users              map[string]User
 	Players            [2]*Player // two players
 	TroopSpecs         map[string]specs.TroopSpec
 	TowerSpecs         map[string]specs.TowerSpec
@@ -210,7 +211,20 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 	p.ActiveTroops = append(p.ActiveTroops, troop)
 
 	if cmd.TroopName == "queen" {
-		p.HealWeakestTower(300)
+		go func(troop *TroopInstance, playerIdx int) {
+			for {
+				time.Sleep(2 * time.Second)
+
+				mutex.Lock()
+				if troop.Health <= 0 {
+					mutex.Unlock()
+					log.Printf("Troop %s is dead, stopping attack loop\n", troop.Spec.Name)
+					break
+				}
+				p.HealWeakestTower(int(400 * p.Level.Multiplier))
+				mutex.Unlock()
+			}
+		}(troop, cmd.PlayerIndex)
 	}
 	if cmd.TroopName != "queen" { // Queen already handled as instant support
 		go func(troop *TroopInstance, playerIdx int) {
@@ -265,36 +279,61 @@ func (gs *GameSession) awardExp(playerIdx int, tower *specs.TowerSpec) {
 	expGain := 0
 	switch tower.Name {
 	case "King Tower":
-		expGain = 200
-	case "Princess Tower":
-		expGain = 150
-	case "Guard Tower":
 		expGain = 100
-	case "Cannon":
+	case "Princess Tower":
+		expGain = 80
+	case "Guard Tower":
 		expGain = 50
+	case "Cannon":
+		expGain = 30
 	}
 
 	// Add EXP and check for level up
 	player.Level.Exp += expGain
-	gs.checkLevelUp(player)
+	gs.checkLevelUp(player, gs.Users, userFilePath)
 }
 
 // checkLevelUp handles player level progression
-func (gs *GameSession) checkLevelUp(player *Player) {
-	for player.Level.Exp >= player.Level.NextLevel {
+func (gs *GameSession) checkLevelUp(player *Player, users map[string]User, userFilePath string) {
+	if player.Level.Exp >= player.Level.NextLevel {
 		player.Level.Level++
 		player.Level.Exp -= player.Level.NextLevel
-		player.Level.NextLevel = int(float64(player.Level.NextLevel) * 1.1) // 10% increase
-		player.Level.Multiplier = 1.0 + (float64(player.Level.Level) * 0.1) // 10% per level
+		player.Level.NextLevel = int(float64(player.Level.NextLevel) * 1.1)
+		player.Level.Multiplier = 1.0 + (float64(player.Level.Level) * 0.1) - 0.1
+
+		// Update users map
+		user := users[player.Username]
+		user.Level = player.Level.Level
+		user.Exp = player.Level.Exp
+		user.NextLevel = player.Level.NextLevel
+		user.Multiplier = player.Level.Multiplier
+		users[player.Username] = user
+
+		// Save to JSON file
+		if err := saveUsers(userFilePath, users); err != nil {
+			log.Println("Failed to save updated user level:", err)
+		}
 
 		// Notify client of level up
 		if player.Conn != nil {
-			levelData := fmt.Sprintf(`{"level":%d,"exp":%d,"next_level":%d,"multiplier":%.2f}`,
+			levelData := fmt.Sprintf(`{"Your level":%d,"exp":%d,"next_level":%d,"multiplier":%.2f}`,
 				player.Level.Level, player.Level.Exp, player.Level.NextLevel, player.Level.Multiplier)
 			SendPDU(player.Conn, PDU{
 				Type: "level_up",
 				Data: []byte(levelData),
 			})
+		}
+	} else {
+		// Update users map
+		user := users[player.Username]
+		user.Level = player.Level.Level
+		user.Exp = player.Level.Exp
+		user.NextLevel = player.Level.NextLevel
+		user.Multiplier = player.Level.Multiplier
+		users[player.Username] = user
+		// Save to JSON file
+		if err := saveUsers(userFilePath, users); err != nil {
+			log.Println("Failed to save updated user level:", err)
 		}
 	}
 }
@@ -397,10 +436,12 @@ func (gs *GameSession) evaluateWinner() {
 	} else {
 		// Draw - both get small EXP
 		for _, p := range gs.Players {
+			p.Level.Exp += 50
+			gs.checkLevelUp(p, gs.Users, userFilePath)
 			if p.Conn != nil {
 				SendPDU(p.Conn, PDU{
 					Type: "game_end",
-					Data: json.RawMessage(`{"result":"draw","exp":10}`),
+					Data: json.RawMessage(`{"result":"draw","exp":50}`),
 				})
 			}
 		}
@@ -409,34 +450,30 @@ func (gs *GameSession) evaluateWinner() {
 
 	// Winner gets more EXP
 	if winner.Conn != nil {
+		winner.Level.Exp += 70
+		gs.checkLevelUp(winner, gs.Users, userFilePath)
 		SendPDU(winner.Conn, PDU{
 			Type: "game_end",
-			Data: json.RawMessage(`{"result":"win","exp":30}`),
+			Data: json.RawMessage(`{"result":"win","exp":70}`),
 		})
 	}
 	if loser.Conn != nil {
+		loser.Level.Exp += 30
+		gs.checkLevelUp(loser, gs.Users, userFilePath)
 		SendPDU(loser.Conn, PDU{
 			Type: "game_end",
-			Data: json.RawMessage(`{"result":"loss","exp":5}`),
+			Data: json.RawMessage(`{"result":"loss","exp":30}`),
 		})
 	}
 }
 
 // NewGameSession creates a new game session
-func NewGameSession(players [2]*Player,
+func NewGameSession(users map[string]User, players [2]*Player,
 	troopSpecs map[string]specs.TroopSpec,
 	towerSpecs map[string]specs.TowerSpec) *GameSession {
-	// Initialize player levels
-	for i := range players {
-		players[i].Level = Level{
-			Level:      1,
-			Exp:        0,
-			NextLevel:  100,
-			Multiplier: 1.0,
-		}
-	}
 
 	return &GameSession{
+		Users:        users,
 		Players:      players,
 		TroopSpecs:   troopSpecs,
 		TowerSpecs:   towerSpecs,

@@ -3,6 +3,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net"
 	"os"
 	"tcr/specs"
@@ -20,11 +21,11 @@ type User struct {
 
 // Player represents a player in a game session
 type Player struct {
-	Conn        net.Conn
-	Username    string
-	Mana        int
-	Towers      []*specs.TowerSpec
-	Level       Level
+	Conn         net.Conn
+	Username     string
+	Mana         int
+	Towers       []*specs.TowerSpec
+	Level        Level
 	ActiveTroops []*TroopInstance // Or a similar struct you define
 }
 
@@ -68,6 +69,17 @@ func (p *Player) HealWeakestTower(amount int) {
 	}
 	if weakest != nil {
 		weakest.Health += amount
+		//Check limit
+		if(weakest.Type == "king"){
+			if weakest.Health >= 6000{
+				weakest.Health = 6000
+			}
+		} else if(weakest.Type == "guard"){
+			if weakest.Health >= 2500{
+				weakest.Health = 2500
+			}
+		}
+		log.Println("Queen Heal weaknest tower '", weakest.Name, "' for ", amount, ". New Health is: ", weakest.Health)
 	}
 }
 

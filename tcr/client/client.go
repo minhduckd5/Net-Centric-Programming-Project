@@ -213,6 +213,7 @@ func (c *GameClient) run() error {
 				fmt.Printf("Login failed: %v\n", err)
 			} else {
 				fmt.Println("Login successful!")
+				fmt.Println("Finding a match! Please wait a moment")
 				goto StartGameLoop
 			}
 		case "R", "r":
@@ -253,6 +254,8 @@ StartGameLoop:
 				c.handleGameStart(pdu)
 			case "state_update":
 				c.handleStateUpdate(pdu)
+			case "level_up":
+				c.handleLevelUp(pdu)
 			case "game_end":
 				c.handleGameEnd(pdu)
 				os.Exit(0) // Gracefully exit game
@@ -284,6 +287,11 @@ StartGameLoop:
 			time.Sleep(500 * time.Millisecond) // Avoid busy-waiting
 		}
 	}
+}
+
+func (c *GameClient) handleLevelUp(pdu server.PDU) {
+	fmt.Println("Congratulation you have level up!")
+	fmt.Println(pdu.Data)
 }
 
 func readLine(reader *bufio.Reader) string {
