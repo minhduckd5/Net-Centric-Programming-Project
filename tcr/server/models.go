@@ -17,6 +17,7 @@ type User struct {
 	Exp          int     `json:"exp"`
 	NextLevel    int     `json:"next_level"`
 	Multiplier   float64 `json:"multiplier"`
+	isLogin      bool
 }
 
 // Player represents a player in a game session
@@ -70,12 +71,12 @@ func (p *Player) HealWeakestTower(amount int) {
 	if weakest != nil {
 		weakest.Health += amount
 		//Check limit
-		if(weakest.Type == "king"){
-			if weakest.Health >= 6000{
+		if weakest.Type == "king" {
+			if weakest.Health >= 6000 {
 				weakest.Health = 6000
 			}
-		} else if(weakest.Type == "guard"){
-			if weakest.Health >= 2500{
+		} else if weakest.Type == "guard" {
+			if weakest.Health >= 2500 {
 				weakest.Health = 2500
 			}
 		}

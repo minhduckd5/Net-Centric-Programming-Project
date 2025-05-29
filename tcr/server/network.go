@@ -139,20 +139,22 @@ func HandleConnection(conn net.Conn, users map[string]User, matchQueue chan *Cli
 
 		case "login":
 			stored, ok := users[creds.Username]
-			if !ok || stored.PasswordHash != creds.Password {
+			if !ok || stored.PasswordHash != creds.Password || stored.isLogin {
 				SendPDU(conn, PDU{
 					Type: "login_resp",
-					Data: []byte(`{"status":"ERR"}`),
+					Data: []byte(`{"status":"ERR. Incorrect password or usernam or user currently login"}`),
 				})
 				continue // ❗ Allow retry
 			}
 
+			stored.isLogin = true
+			users[creds.Username] = stored
 			SendPDU(conn, PDU{
 				Type: "login_resp",
 				Data: []byte(`{"status":"OK"}`),
 			})
 			log.Printf("User logged in: %s\n", creds.Username)
-
+			log.Println("User logged in: ", stored.isLogin)
 			// ✅ Success: enqueue and exit loop
 			handler := &ClientHandler{Users: users, Conn: conn, User: &stored, HandlerID: id}
 			matchQueue <- handler

@@ -438,6 +438,9 @@ func (gs *GameSession) evaluateWinner() {
 		for _, p := range gs.Players {
 			p.Level.Exp += 50
 			gs.checkLevelUp(p, gs.Users, userFilePath)
+			user := gs.Users[p.Username] // Get a copy of the struct
+			user.isLogin = false         // Modify the field
+			gs.Users[p.Username] = user  // Store it back in the map
 			if p.Conn != nil {
 				SendPDU(p.Conn, PDU{
 					Type: "game_end",
@@ -451,14 +454,21 @@ func (gs *GameSession) evaluateWinner() {
 	// Winner gets more EXP
 	if winner.Conn != nil {
 		winner.Level.Exp += 70
+		user := gs.Users[winner.Username] // Get a copy of the struct
+		user.isLogin = false              // Modify the field
+		gs.Users[winner.Username] = user  // Store it back in the map
 		gs.checkLevelUp(winner, gs.Users, userFilePath)
 		SendPDU(winner.Conn, PDU{
 			Type: "game_end",
 			Data: json.RawMessage(`{"result":"win","exp":70}`),
 		})
+
 	}
 	if loser.Conn != nil {
 		loser.Level.Exp += 30
+		user := gs.Users[loser.Username] // Get a copy of the struct
+		user.isLogin = false             // Modify the field
+		gs.Users[loser.Username] = user  // Store it back in the map
 		gs.checkLevelUp(loser, gs.Users, userFilePath)
 		SendPDU(loser.Conn, PDU{
 			Type: "game_end",
