@@ -1,4 +1,10 @@
 cd to tcr\cmd\server
-go run main.go to run server
+go run main.go 
+
 cd to tcr/client
-go run client.go to run client
+go run client.go 
+
+cd to tcr/client
+go run client.go 
+
+Need server run first, then two clients for the game to start
