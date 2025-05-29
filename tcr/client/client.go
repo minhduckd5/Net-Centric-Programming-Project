@@ -55,6 +55,39 @@ func (c *GameClient) connect() error {
 	return fmt.Errorf("failed to connect after %d attempts", maxReconnectAttempts)
 }
 
+// Register new user
+func (c *GameClient) register() error {
+	fmt.Print("Choose a username: ")
+	c.username = strings.TrimSpace(readLine(c.reader))
+	fmt.Print("Choose a password: ")
+	c.password = strings.TrimSpace(readLine(c.reader))
+
+	cred := fmt.Sprintf(`{"username":"%s","password":"%s"}`, c.username, c.password)
+	if err := server.SendPDU(c.conn, server.PDU{
+		Type: "register",
+		Data: json.RawMessage(cred),
+	}); err != nil {
+		return fmt.Errorf("register send error: %v", err)
+	}
+
+	pdu, err := server.ReceivePDU(c.conn)
+	if err != nil {
+		return fmt.Errorf("register response error: %v", err)
+	}
+
+	var resp struct{ Status string }
+	if err := json.Unmarshal(pdu.Data, &resp); err != nil {
+		return fmt.Errorf("register parse error: %v", err)
+	}
+
+	if resp.Status != "OK" {
+		return fmt.Errorf("register failed: %s", resp.Status)
+	}
+
+	return nil
+}
+
+// Login
 func (c *GameClient) login() error {
 	fmt.Print("Username: ")
 	c.username = strings.TrimSpace(readLine(c.reader))
@@ -82,7 +115,6 @@ func (c *GameClient) login() error {
 		return fmt.Errorf("login failed: %s", resp.Status)
 	}
 
-	fmt.Println("Login successful!")
 	return nil
 }
 
@@ -171,10 +203,30 @@ func (c *GameClient) run() error {
 	}
 	defer c.conn.Close()
 
-	if err := c.login(); err != nil {
-		return err
+	// Login/Register loop
+	for {
+		fmt.Print("Choose L(Login) or R(Register): ")
+		choice := strings.TrimSpace(readLine(c.reader))
+		switch choice {
+		case "L", "l":
+			if err := c.login(); err != nil {
+				fmt.Printf("Login failed: %v\n", err)
+			} else {
+				fmt.Println("Login successful!")
+				goto StartGameLoop
+			}
+		case "R", "r":
+			if err := c.register(); err != nil {
+				fmt.Printf("Register failed: %v\n", err)
+			} else {
+				fmt.Println("Registration successful. Please login.")
+			}
+		default:
+			fmt.Println("Invalid choice. Please enter 'L or l' or 'R or r'.")
+		}
 	}
 
+StartGameLoop:
 	// Handle graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)

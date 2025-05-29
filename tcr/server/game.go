@@ -172,6 +172,7 @@ func (gs *GameSession) tick() {
 			target.Health -= dmg
 			if target.Health <= 0 {
 				opponent.ActiveTroops = opponent.ActiveTroops[1:]
+				log.Println("Troop die, active list: ", opponent.ActiveTroops)
 			}
 		}
 	}
@@ -210,38 +211,47 @@ func (gs *GameSession) handleDeploy(cmd DeployCmd) {
 
 	if cmd.TroopName == "queen" {
 		p.HealWeakestTower(300)
-	} else {
-		gs.attackOpponentTower(cmd.PlayerIndex, spec)
+	}
+	if cmd.TroopName != "queen" { // Queen already handled as instant support
+		go func(troop *TroopInstance, playerIdx int) {
+			for {
+				time.Sleep(2 * time.Second)
+
+				mutex.Lock()
+				if troop.Health <= 0 {
+					mutex.Unlock()
+					log.Printf("Troop %s is dead, stopping attack loop\n", troop.Spec.Name)
+					break
+				}
+				gs.attackOpponentTowerFromTroop(playerIdx, troop)
+				mutex.Unlock()
+			}
+		}(troop, cmd.PlayerIndex)
 	}
 }
 
-// attackOpponentTower resolves a troop attacking the next enemy tower
-func (gs *GameSession) attackOpponentTower(idx int, spec specs.TroopSpec) {
-	target := gs.Players[1-idx].NextAliveTower()
-	log.Println(target)
+func (gs *GameSession) attackOpponentTowerFromTroop(playerIdx int, troop *TroopInstance) {
+	opponent := gs.Players[1-playerIdx]
+	player := gs.Players[playerIdx]
 
-	// Apply level multiplier to attack
-	baseATK := float64(spec.Damage) * gs.Players[idx].Level.Multiplier
-	// log.Println("baseATK", baseATK)
-
-	// Calculate critical hit
-	isCrit := rand.Float64() < 0.1 // 10% crit chance
-	if isCrit {
-		// log.Println("critical baseATK", baseATK)
-		baseATK *= 1.2 // 20% more damage on crit
+	target := opponent.NextAliveTower()
+	if target == nil {
+		return
 	}
 
-	// Calculate final damage
+	baseATK := float64(troop.Spec.Damage) * player.Level.Multiplier
+	if rand.Float64() < 0.1 {
+		baseATK *= 1.2
+	}
 	dmg := max(int(baseATK)-target.Defence, 0)
-	// log.Println("final", dmg)
 	target.Health -= dmg
-	// log.Println("target.Health", target.Health)
-	if target.Health <= 0 {
-		gs.Players[1-idx].DestroyTower(target)
-		gs.justDestroyedTower = true
 
-		// Award EXP for tower destruction
-		gs.awardExp(idx, target)
+	log.Printf("Troop %s attacked tower %s for %d damage\n", troop.Spec.Name, target.Name, dmg)
+
+	if target.Health <= 0 {
+		opponent.DestroyTower(target)
+		gs.justDestroyedTower = true
+		gs.awardExp(playerIdx, target)
 	} else {
 		gs.justDestroyedTower = false
 	}

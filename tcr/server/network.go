@@ -2,13 +2,13 @@
 package server
 
 import (
-	"bufio"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
 	"tcr/specs"
 )
 
@@ -67,37 +67,104 @@ func ReceivePDU(conn net.Conn) (PDU, error) {
 	return pdu, nil
 }
 
-// HandleConnection manages a single client connection
-func HandleConnection(conn net.Conn, users map[string]User, matchQueue chan *ClientHandler, id int) {
-
-	pdu, err := ReceivePDU(conn)
+func saveUsers(path string, users map[string]User) error {
+	data, err := json.MarshalIndent(users, "", "  ")
 	if err != nil {
+		return err
 	}
+	return os.WriteFile(path, data, 0644)
+}
 
-	var creds struct{ Username, Password string }
-	if err := json.Unmarshal(pdu.Data, &creds); err != nil {
-		log.Println("unmarshal credentials:", err)
+// HandleConnection manages a single client connection
+const userFilePath = "./players.json"
+
+func HandleConnection(conn net.Conn, users map[string]User, matchQueue chan *ClientHandler, id int) {
+	for {
+		pdu, err := ReceivePDU(conn)
+		if err != nil {
+			log.Println("receive error:", err)
+			return
+		}
+
+		var creds struct {
+			Username string `json:"username"`
+			Password string `json:"password"`
+		}
+
+		if err := json.Unmarshal(pdu.Data, &creds); err != nil {
+			log.Println("unmarshal credentials:", err)
+			return
+		}
+
+		switch pdu.Type {
+
+		case "register":
+			if _, exists := users[creds.Username]; exists {
+				SendPDU(conn, PDU{
+					Type: "register_resp",
+					Data: []byte(`{"status":"ERR:UserExists"}`),
+				})
+				continue // ❗ Allow retry
+			}
+
+			newUser := User{
+				Username:     creds.Username,
+				PasswordHash: creds.Password,
+				Level:        1,
+				Exp:          0,
+				NextLevel:    2,
+				Multiplier:   2,
+			}
+
+			users[creds.Username] = newUser
+
+			if err := saveUsers(userFilePath, users); err != nil {
+				log.Println("error saving users:", err)
+				SendPDU(conn, PDU{
+					Type: "register_resp",
+					Data: []byte(`{"status":"ERR:SaveFailed"}`),
+				})
+				continue // ❗ Allow retry
+			}
+
+			SendPDU(conn, PDU{
+				Type: "register_resp",
+				Data: []byte(`{"status":"OK"}`),
+			})
+			log.Printf("User registered: %s\n", creds.Username)
+
+			// ✅ After registration, let them login in next loop
+			continue
+
+		case "login":
+			stored, ok := users[creds.Username]
+			if !ok || stored.PasswordHash != creds.Password {
+				SendPDU(conn, PDU{
+					Type: "login_resp",
+					Data: []byte(`{"status":"ERR"}`),
+				})
+				continue // ❗ Allow retry
+			}
+
+			SendPDU(conn, PDU{
+				Type: "login_resp",
+				Data: []byte(`{"status":"OK"}`),
+			})
+			log.Printf("User logged in: %s\n", creds.Username)
+
+			// ✅ Success: enqueue and exit loop
+			handler := &ClientHandler{Conn: conn, User: &stored, HandlerID: id}
+			matchQueue <- handler
+			return
+
+		default:
+			SendPDU(conn, PDU{
+				Type: "error",
+				Data: []byte(`{"msg":"invalid command"}`),
+			})
+			continue
+		}
 	}
-	log.Printf("Received login credentials: %s / %s", creds.Username, creds.Password)
-
-	writer := bufio.NewWriter(conn)
-	enc := json.NewEncoder(writer)
-
-	stored, ok := users[creds.Username]
-	if !ok || stored.PasswordHash != creds.Password {
-		enc.Encode(PDU{Type: "login_resp", Data: []byte(`{"status":"ERR"}`)})
-		writer.Flush()
-	}
-
-	// Send login success
-	resp := PDU{Type: "login_resp", Data: []byte(`{"status":"OK"}`)}
-	if err := SendPDU(conn, resp); err != nil {
-		log.Println("send login_resp:", err)
-	}
-
-	// Enqueue for matchmaking
-	handler := &ClientHandler{Conn: conn, User: &stored, HandlerID: id}
-	matchQueue <- handler
 }
 
 // StartServer begins listening and handles matchmaking
@@ -160,7 +227,7 @@ func StartGameSession(c1, c2 *ClientHandler,
 		{
 			Conn:     c1.Conn,
 			Username: c1.User.Username,
-			Mana:     10,
+			Mana:     5,
 			Towers: []*specs.TowerSpec{
 				cloneTowerSpec(towerSpecs["guard_tower"]),
 				cloneTowerSpec(towerSpecs["guard_tower"]),
@@ -176,7 +243,7 @@ func StartGameSession(c1, c2 *ClientHandler,
 		{
 			Conn:     c2.Conn,
 			Username: c2.User.Username,
-			Mana:     10,
+			Mana:     5,
 			Towers: []*specs.TowerSpec{
 				cloneTowerSpec(towerSpecs["guard_tower"]),
 				cloneTowerSpec(towerSpecs["guard_tower"]),

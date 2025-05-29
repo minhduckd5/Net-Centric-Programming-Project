@@ -115,7 +115,7 @@
             "type": "king",
             "health": 5000,
             "damage": 200,
-            "defence": 35,
+            "defence": 55,
             "range": 7.0,
             "attack_speed": 1.0,
             "target": "both"
@@ -144,8 +144,8 @@
             "name": "Guard Tower",
             "type": "cannon",
             "health": 1000,
-            "damage": 300,
-            "defence": 100,
+            "damage": 100,
+            "defence": 50,
             "range": 5.0,
             "attack_speed": 1.0,
             "target": "ground"
