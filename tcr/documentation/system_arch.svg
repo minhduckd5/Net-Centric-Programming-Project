@@ -1,0 +1,345 @@
+<svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="serverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a90e2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357abd;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="clientGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#50c878;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3a9b5c;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c44569;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="dataGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9b59b6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7d3c98;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1400" height="900" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="700" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#2c3e50">
+    Text-Based Clash Royale (TCR) - Complete System Architecture
+  </text>
+  <text x="700" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#7f8c8d">
+    Network Programming Project - Go Implementation with TCP/UDP
+  </text>
+  
+  <!-- Server Side -->
+  <rect x="50" y="80" width="600" height="350" rx="12" fill="url(#serverGrad)" filter="url(#shadow)" opacity="0.1"/>
+  <text x="350" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2c3e50">
+    SERVER SIDE (Go)
+  </text>
+  
+  <!-- Authentication & Session Manager -->
+  <rect x="80" y="120" width="200" height="90" rx="8" fill="url(#serverGrad)" filter="url(#shadow)"/>
+  <text x="180" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+    Auth &amp; Session Manager
+  </text>
+  <text x="180" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Username/Password Auth
+  </text>
+  <text x="180" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Session Management
+  </text>
+  <text x="180" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Player Connections
+  </text>
+  
+  <!-- Game Engine -->
+  <rect x="320" y="120" width="200" height="90" rx="8" fill="url(#serverGrad)" filter="url(#shadow)"/>
+  <text x="420" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+    Game Engine
+  </text>
+  <text x="420" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Battle Logic
+  </text>
+  <text x="420" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Turn Management
+  </text>
+  <text x="420" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Win Condition Check
+  </text>
+  
+  <!-- Matchmaking System -->
+  <rect x="80" y="230" width="200" height="90" rx="8" fill="url(#serverGrad)" filter="url(#shadow)"/>
+  <text x="180" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+    Matchmaking System
+  </text>
+  <text x="180" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Player Pairing
+  </text>
+  <text x="180" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Game Room Creation
+  </text>
+  <text x="180" y="305" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Queue Management
+  </text>
+  
+  <!-- Network Handler -->
+  <rect x="320" y="230" width="200" height="90" rx="8" fill="url(#serverGrad)" filter="url(#shadow)"/>
+  <text x="420" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+    Network Handler
+  </text>
+  <text x="420" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • TCP/UDP Protocol
+  </text>
+  <text x="420" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Message Routing
+  </text>
+  <text x="420" y="305" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Connection Pool
+  </text>
+  
+  <!-- Timer System (Enhanced) -->
+  <rect x="560" y="120" width="160" height="90" rx="8" fill="url(#serverGrad)" filter="url(#shadow)"/>
+  <text x="640" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+    Timer System
+  </text>
+  <text x="640" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • 3-min Battle Timer
+  </text>
+  <text x="640" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Mana Regeneration
+  </text>
+  <text x="640" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Continuous Play
+  </text>
+  
+  <!-- Experience System -->
+  <rect x="560" y="230" width="160" height="90" rx="8" fill="url(#serverGrad)" filter="url(#shadow)"/>
+  <text x="640" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+    EXP System
+  </text>
+  <text x="640" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Level Progression
+  </text>
+  <text x="640" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Stat Scaling (10%)
+  </text>
+  <text x="640" y="305" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Win/Draw Rewards
+  </text>
+  
+  <!-- Game Logic Layer -->
+  <rect x="80" y="340" width="640" height="80" rx="8" fill="url(#gameGrad)" filter="url(#shadow)"/>
+  <text x="400" y="365" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+    GAME LOGIC LAYER
+  </text>
+  <text x="150" y="385" font-family="Arial, sans-serif" font-size="12" fill="white">• Combat System (ATK-DEF)</text>
+  <text x="300" y="385" font-family="Arial, sans-serif" font-size="12" fill="white">• Critical Hit Logic (20% bonus)</text>
+  <text x="480" y="385" font-family="Arial, sans-serif" font-size="12" fill="white">• Tower Targeting Rules</text>
+  <text x="150" y="405" font-family="Arial, sans-serif" font-size="12" fill="white">• Troop Deployment</text>
+  <text x="300" y="405" font-family="Arial, sans-serif" font-size="12" fill="white">• Mana Management (5-10)</text>
+  <text x="480" y="405" font-family="Arial, sans-serif" font-size="12" fill="white">• Special Abilities (Queen)</text>
+  
+  <!-- Client Side -->
+  <rect x="750" y="80" width="600" height="350" rx="12" fill="url(#clientGrad)" filter="url(#shadow)" opacity="0.1"/>
+  <text x="1050" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2c3e50">
+    CLIENT SIDE (Go)
+  </text>
+  
+  <!-- Game Client -->
+  <rect x="780" y="120" width="200" height="90" rx="8" fill="url(#clientGrad)" filter="url(#shadow)"/>
+  <text x="880" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+    Game Client
+  </text>
+  <text x="880" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Main Game Loop
+  </text>
+  <text x="880" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Input Processing
+  </text>
+  <text x="880" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • State Management
+  </text>
+  
+  <!-- Display Manager -->
+  <rect x="1020" y="120" width="200" height="90" rx="8" fill="url(#clientGrad)" filter="url(#shadow)"/>
+  <text x="1120" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+    Display Manager
+  </text>
+  <text x="1120" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Text-Based UI
+  </text>
+  <text x="1120" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Battle Visualization
+  </text>
+  <text x="1120" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Status Display
+  </text>
+  
+  <!-- Connection Manager -->
+  <rect x="780" y="230" width="200" height="90" rx="8" fill="url(#clientGrad)" filter="url(#shadow)"/>
+  <text x="880" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+    Connection Manager
+  </text>
+  <text x="880" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Server Communication
+  </text>
+  <text x="880" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Protocol Handling
+  </text>
+  <text x="880" y="305" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Error Recovery
+  </text>
+  
+  <!-- Local Game State -->
+  <rect x="1020" y="230" width="200" height="90" rx="8" fill="url(#clientGrad)" filter="url(#shadow)"/>
+  <text x="1120" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+    Local Game State
+  </text>
+  <text x="1120" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Battle State Cache
+  </text>
+  <text x="1120" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • Player Stats
+  </text>
+  <text x="1120" y="305" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="white">
+    • UI State
+  </text>
+  
+  <!-- Player Interface -->
+  <rect x="780" y="340" width="440" height="80" rx="8" fill="url(#clientGrad)" filter="url(#shadow)"/>
+  <text x="1000" y="365" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+    PLAYER INTERFACE
+  </text>
+  <text x="820" y="385" font-family="Arial, sans-serif" font-size="12" fill="white">• Command Input (deploy, attack)</text>
+  <text x="1050" y="385" font-family="Arial, sans-serif" font-size="12" fill="white">• Battle Status Display</text>
+  <text x="820" y="405" font-family="Arial, sans-serif" font-size="12" fill="white">• Troop/Tower Selection</text>
+  <text x="1050" y="405" font-family="Arial, sans-serif" font-size="12" fill="white">• Real-time Updates</text>
+  
+  <!-- Data Storage -->
+  <rect x="100" y="460" width="300" height="120" rx="8" fill="url(#dataGrad)" filter="url(#shadow)"/>
+  <text x="250" y="485" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+    JSON DATA STORAGE
+  </text>
+  <text x="120" y="510" font-family="Arial, sans-serif" font-size="12" fill="white">📄 player_data.json</text>
+  <text x="260" y="510" font-family="Arial, sans-serif" font-size="12" fill="white">📄 troops_specs.json</text>
+  <text x="120" y="530" font-family="Arial, sans-serif" font-size="12" fill="white">  • EXP, Levels</text>
+  <text x="260" y="530" font-family="Arial, sans-serif" font-size="12" fill="white">  • HP, ATK, DEF, MANA</text>
+  <text x="120" y="550" font-family="Arial, sans-serif" font-size="12" fill="white">  • Win/Loss Stats</text>
+  <text x="260" y="550" font-family="Arial, sans-serif" font-size="12" fill="white">  • CRIT, Special Abilities</text>
+  <text x="120" y="570" font-family="Arial, sans-serif" font-size="12" fill="white">📄 towers_specs.json • Tower Stats &amp; Levels</text>
+  
+  <!-- Protocol Definition -->
+  <rect x="450" y="460" width="300" height="120" rx="8" fill="#e67e22" filter="url(#shadow)"/>
+  <text x="600" y="485" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+    NETWORK PROTOCOL
+  </text>
+  <text x="470" y="510" font-family="Arial, sans-serif" font-size="12" fill="white">🔌 TCP/UDP Communication</text>
+  <text x="470" y="530" font-family="Arial, sans-serif" font-size="12" fill="white">📦 Custom PDU Format:</text>
+  <text x="490" y="550" font-family="Arial, sans-serif" font-size="11" fill="white">• LOGIN, MATCHMAKE, DEPLOY</text>
+  <text x="490" y="565" font-family="Arial, sans-serif" font-size="11" fill="white">• ATTACK, STATE_UPDATE, GAME_END</text>
+  
+  <!-- Game Specifications -->
+  <rect x="800" y="460" width="300" height="120" rx="8" fill="#2c3e50" filter="url(#shadow)"/>
+  <text x="950" y="485" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+    GAME SPECIFICATIONS
+  </text>
+  <text x="820" y="510" font-family="Arial, sans-serif" font-size="12" fill="white">🏰 Towers: King (2000HP) + 2 Guards (1000HP)</text>
+  <text x="820" y="530" font-family="Arial, sans-serif" font-size="12" fill="white">⚔️ Troops: Pawn, Bishop, Rook, Knight, Prince, Queen</text>
+  <text x="820" y="550" font-family="Arial, sans-serif" font-size="12" fill="white">⏱️ Enhanced: 3min battles, continuous play</text>
+  <text x="820" y="570" font-family="Arial, sans-serif" font-size="12" fill="white">💎 Mana: 5-10, regenerates 1/sec</text>
+  
+  <!-- Game Rules -->
+  <rect x="1150" y="460" width="200" height="120" rx="8" fill="#8e44ad" filter="url(#shadow)"/>
+  <text x="1250" y="485" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+    WIN CONDITIONS
+  </text>
+  <text x="1170" y="510" font-family="Arial, sans-serif" font-size="11" fill="white">👑 Destroy King Tower</text>
+  <text x="1170" y="525" font-family="Arial, sans-serif" font-size="11" fill="white">🏆 Most towers at timeout</text>
+  <text x="1170" y="540" font-family="Arial, sans-serif" font-size="11" fill="white">🛡️ Guard before King rule</text>
+  <text x="1170" y="555" font-family="Arial, sans-serif" font-size="11" fill="white">⚡ Critical hits (CRIT%)</text>
+  <text x="1170" y="570" font-family="Arial, sans-serif" font-size="11" fill="white">📈 EXP: Win+30, Draw+10</text>
+  
+  <!-- Network Flow Arrows -->
+  <!-- Main client-server connection -->
+  <line x1="750" y1="275" x2="650" y2="275" stroke="#e74c3c" stroke-width="4" stroke-dasharray="8,4"/>
+  <polygon points="740,270 750,275 740,280" fill="#e74c3c"/>
+  <polygon points="660,270 650,275 660,280" fill="#e74c3c"/>
+  <text x="700" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e74c3c">
+    TCP/UDP Protocol
+  </text>
+  
+  <!-- Server internal connections -->
+  <line x1="280" y1="165" x2="320" y2="165" stroke="#2c3e50" stroke-width="2"/>
+  <polygon points="315,160 325,165 315,170" fill="#2c3e50"/>
+  
+  <line x1="180" y1="230" x2="180" y2="210" stroke="#2c3e50" stroke-width="2"/>
+  <polygon points="175,215 180,205 185,215" fill="#2c3e50"/>
+  
+  <line x1="280" y1="275" x2="320" y2="275" stroke="#2c3e50" stroke-width="2"/>
+  <polygon points="315,270 325,275 315,280" fill="#2c3e50"/>
+  
+  <!-- Client internal connections -->
+  <line x1="980" y1="165" x2="1020" y2="165" stroke="#27ae60" stroke-width="2"/>
+  <polygon points="1015,160 1025,165 1015,170" fill="#27ae60"/>
+  
+  <line x1="980" y1="275" x2="1020" y2="275" stroke="#27ae60" stroke-width="2"/>
+  <polygon points="1015,270 1025,275 1015,280" fill="#27ae60"/>
+  
+  <!-- Data connections -->
+  <line x1="250" y1="460" x2="350" y2="430" stroke="#9b59b6" stroke-width="3"/>
+  <polygon points="345,425 355,430 345,435" fill="#9b59b6"/>
+  
+  <line x1="600" y1="460" x2="520" y2="430" stroke="#e67e22" stroke-width="3"/>
+  <polygon points="515,425 525,430 515,435" fill="#e67e22"/>
+  
+  <!-- Game Logic connections -->
+  <line x1="400" y1="340" x2="400" y2="320" stroke="#c44569" stroke-width="3"/>
+  <polygon points="395,325 400,315 405,325" fill="#c44569"/>
+  
+  <!-- Legend -->
+  <rect x="50" y="620" width="1300" height="120" rx="8" fill="white" stroke="#bdc3c7" stroke-width="2"/>
+  <text x="70" y="645" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">
+    SYSTEM ARCHITECTURE LEGEND
+  </text>
+  
+  <!-- Legend items -->
+  <rect x="70" y="655" width="20" height="15" fill="url(#serverGrad)"/>
+  <text x="100" y="667" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">Server Components (Go)</text>
+  
+  <rect x="250" y="655" width="20" height="15" fill="url(#clientGrad)"/>
+  <text x="280" y="667" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">Client Components (Go)</text>
+  
+  <rect x="430" y="655" width="20" height="15" fill="url(#gameGrad)"/>
+  <text x="460" y="667" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">Game Logic Layer</text>
+  
+  <rect x="580" y="655" width="20" height="15" fill="url(#dataGrad)"/>
+  <text x="610" y="667" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">JSON Data Storage</text>
+  
+  <rect x="730" y="655" width="20" height="15" fill="#e67e22"/>
+  <text x="760" y="667" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">Network Protocol</text>
+  
+  <rect x="880" y="655" width="20" height="15" fill="#2c3e50"/>
+  <text x="910" y="667" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">Game Specifications</text>
+  
+  <rect x="1050" y="655" width="20" height="15" fill="#8e44ad"/>
+  <text x="1080" y="667" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">Game Rules &amp; Logic</text>
+  
+  <!-- Architecture Flow Description -->
+  <text x="70" y="690" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2c3e50">
+    SYSTEM FLOW:
+  </text>
+  <text x="70" y="710" font-family="Arial, sans-serif" font-size="12" fill="#34495e">
+    1. Players connect via TCP/UDP → 2. Authentication &amp; Matchmaking → 3. Game Session Creation → 4. Real-time Battle Loop
+  </text>
+  <text x="70" y="725" font-family="Arial, sans-serif" font-size="12" fill="#34495e">
+    5. Combat Resolution (ATK-DEF+CRIT) → 6. State Updates → 7. Win Condition Check → 8. EXP Award &amp; Data Persistence
+  </text>
+  
+  <!-- Arrow marker definitions -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50"/>
+    </marker>
+  </defs>
+</svg>
