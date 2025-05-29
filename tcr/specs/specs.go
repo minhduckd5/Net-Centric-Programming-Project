@@ -122,7 +122,7 @@ func validateSpecs(specs *Specs) error {
 		if tower.Target != "ground" && tower.Target != "air" && tower.Target != "both" {
 			return fmt.Errorf("invalid target type for tower %s: %s", name, tower.Target)
 		}
-		if tower.Type != "king" && tower.Type != "princess" && tower.Type != "cannon" {
+		if tower.Type != "king" && tower.Type != "princess" && tower.Type != "cannon" && tower.Type != "guard" {
 			return fmt.Errorf("invalid tower type for %s: %s", name, tower.Type)
 		}
 	}
