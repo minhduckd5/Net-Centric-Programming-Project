@@ -42,21 +42,9 @@ Text-Based Clash Royale (TCR) - Deployment & Execution Instructions
       * Player statistics
       * Experience points
 
-4. Building
-----------
-4.1 Build Server
-    ```bash
-    go build -o tcr-server server/main.go
-    ```
-
-4.2 Build Client
-    ```bash
-    go build -o tcr-client client/main.go
-    ```
-
-5. Running the Game
+4. Running the Game
 ------------------
-5.1 Start the Server
+4.1 Start the Server
     ```bash
     # Development mode
     ./tcr-server -config config/dev.json

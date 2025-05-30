@@ -120,12 +120,16 @@ go run main.go
 ```
 
 ### 6.2 Start Client
-
+For local server
 ```bash
 cd to tcr/client
 go run client.go 
 ```
-
+For remote server
+```bash
+cd to tcr/client
+go run client.go -server <server-ip>:<port> 
+```
 ---
 
 ## 7. Directory Structure
